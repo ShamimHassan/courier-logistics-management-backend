@@ -6,7 +6,7 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["src/**/*.ts", "prisma/**/*.ts", "tests/**/*.ts"],
+    "includes": ["src/**/*.ts", "prisma.config.ts", "prisma/**/*.ts", "tests/**/*.ts"],
     "ignoreUnknown": true
   },
   "formatter": {

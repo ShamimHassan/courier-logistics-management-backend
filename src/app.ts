@@ -1,9 +1,9 @@
-import 'dotenv/config';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 import { StatusCodes } from 'http-status-codes';
+import { env, getCorsOrigins } from './config/env';
 import v1Routes from './routes/v1';
 
 const app = express();
@@ -13,10 +13,7 @@ app.use(helmet());
 app.use(
   cors({
     origin: (origin, callback) => {
-      const allowedOrigins = process.env.CORS_ORIGINS
-        ? process.env.CORS_ORIGINS.split(',')
-        : ['http://localhost:3000', 'http://localhost:5173'];
-
+      const allowedOrigins = getCorsOrigins();
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -49,7 +46,7 @@ app.get('/api/v1/health', (_req, res) => {
       status: 'ok',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
-      environment: process.env.NODE_ENV,
+      environment: env.NODE_ENV,
     },
   });
 });
