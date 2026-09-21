@@ -115,11 +115,13 @@ model CustomerProfile {
   notes             String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+  deletedAt         DateTime?
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Restrict)
   address  Address?  @relation(fields: [defaultAddressId], references: [id])
 
   @@index([userId])
+  @@index([deletedAt])
 }
 
 model CourierProfile {
@@ -138,6 +140,7 @@ model CourierProfile {
   notes                 String?
   createdAt             DateTime              @default(now())
   updatedAt             DateTime              @updatedAt
+  deletedAt             DateTime?
 
   user          User          @relation(fields: [userId], references: [id], onDelete: Restrict)
   serviceZones  CourierZone[]
@@ -146,6 +149,7 @@ model CourierProfile {
   @@index([userId])
   @@index([approvalStatus, available])
   @@index([averageRating, totalDeliveries])
+  @@index([deletedAt])
 }
 
 model Zone {
@@ -230,6 +234,7 @@ model Address {
   longitude   Decimal? @db.Decimal(9, 6)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
 
   zone Zone? @relation(fields: [zoneId], references: [id])
 
@@ -240,6 +245,8 @@ model Address {
 
   @@index([city, region])
   @@index([zoneId])
+  @@index([phone])
+  @@index([deletedAt])
 }
 
 model Parcel {
@@ -316,16 +323,18 @@ model CourierAssignment {
   earnings     Int              @default(0)
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
+  deletedAt    DateTime?
 
-  shipment Shipment       @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  shipment Shipment       @relation(fields: [shipmentId], references: [id], onDelete: Restrict)
   courier  CourierProfile @relation(fields: [courierId], references: [id], onDelete: Restrict, map: "CourierAssignments_CourierProfile")
 
   deliveryAttempts DeliveryAttempt[]
 
-  @@unique([shipmentId, courierId, status])
+  @@unique([shipmentId, courierId])
   @@index([courierId, status, createdAt])
   @@index([status, createdAt])
   @@index([shipmentId])
+  @@index([deletedAt])
 }
 
 model TrackingEvent {
@@ -340,7 +349,7 @@ model TrackingEvent {
   actorRole  Role?
   createdAt  DateTime       @default(now())
 
-  shipment Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  shipment Shipment @relation(fields: [shipmentId], references: [id], onDelete: Restrict)
   hub      Hub?     @relation(fields: [hubId], references: [id])
 
   @@index([shipmentId, createdAt])
@@ -362,7 +371,7 @@ model DeliveryAttempt {
   geolocationLng    Decimal?              @db.Decimal(9, 6)
   attemptedAt       DateTime              @default(now())
 
-  shipment   Shipment          @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  shipment   Shipment          @relation(fields: [shipmentId], references: [id], onDelete: Restrict)
   assignment CourierAssignment? @relation(fields: [assignmentId], references: [id])
 
   @@index([shipmentId, attemptedAt])
@@ -389,6 +398,7 @@ model Payment {
   disputeResolvedAt   DateTime?
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
+  deletedAt           DateTime?
 
   shipment Shipment       @relation(fields: [shipmentId], references: [id], onDelete: Restrict)
   customer User           @relation(fields: [customerId], references: [id], onDelete: Restrict)
@@ -397,6 +407,7 @@ model Payment {
   @@index([customerId, status, createdAt])
   @@index([status, createdAt])
   @@index([providerPaymentId])
+  @@index([deletedAt])
 }
 
 model PaymentEvent {
@@ -424,13 +435,15 @@ model Rating {
   comment    String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  deletedAt  DateTime?
 
-  shipment Shipment        @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  shipment Shipment        @relation(fields: [shipmentId], references: [id], onDelete: Restrict)
   customer User            @relation("CustomerRatings", fields: [customerId], references: [id], onDelete: Restrict)
 
   @@index([customerId, createdAt])
   @@index([courierId, stars])
   @@index([stars])
+  @@index([deletedAt])
 }
 
 model PricingRule {
@@ -453,12 +466,14 @@ model PricingRule {
   effectiveUntil     DateTime?
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
+  deletedAt          DateTime?
 
   originZone      Zone? @relation("OriginPricing", fields: [originZoneId], references: [id])
   destinationZone Zone? @relation("DestinationPricing", fields: [destinationZoneId], references: [id])
 
   @@index([originZoneId, destinationZoneId, serviceType, isActive])
   @@index([isActive, effectiveFrom, effectiveUntil])
+  @@index([deletedAt])
 }
 
 model Notification {
@@ -473,11 +488,16 @@ model Notification {
   isRead        Boolean  @default(false)
   readAt        DateTime?
   sentAt        DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  deletedAt     DateTime?
 
   recipient User @relation("RecipientNotifications", fields: [recipientId], references: [id], onDelete: Cascade)
 
   @@index([recipientId, isRead, sentAt])
   @@index([sentAt])
+  @@index([shipmentId])
+  @@index([deletedAt])
 }
 
 model AuditLog {
