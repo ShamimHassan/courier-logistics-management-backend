@@ -45,6 +45,7 @@ export type CustomerProfileMinAggregateOutputType = {
   notes: string | null
   createdAt: Date | null
   updatedAt: Date | null
+  deletedAt: Date | null
 }
 
 export type CustomerProfileMaxAggregateOutputType = {
@@ -56,6 +57,7 @@ export type CustomerProfileMaxAggregateOutputType = {
   notes: string | null
   createdAt: Date | null
   updatedAt: Date | null
+  deletedAt: Date | null
 }
 
 export type CustomerProfileCountAggregateOutputType = {
@@ -67,6 +69,7 @@ export type CustomerProfileCountAggregateOutputType = {
   notes: number
   createdAt: number
   updatedAt: number
+  deletedAt: number
   _all: number
 }
 
@@ -90,6 +93,7 @@ export type CustomerProfileMinAggregateInputType = {
   notes?: true
   createdAt?: true
   updatedAt?: true
+  deletedAt?: true
 }
 
 export type CustomerProfileMaxAggregateInputType = {
@@ -101,6 +105,7 @@ export type CustomerProfileMaxAggregateInputType = {
   notes?: true
   createdAt?: true
   updatedAt?: true
+  deletedAt?: true
 }
 
 export type CustomerProfileCountAggregateInputType = {
@@ -112,6 +117,7 @@ export type CustomerProfileCountAggregateInputType = {
   notes?: true
   createdAt?: true
   updatedAt?: true
+  deletedAt?: true
   _all?: true
 }
 
@@ -210,6 +216,7 @@ export type CustomerProfileGroupByOutputType = {
   notes: string | null
   createdAt: Date
   updatedAt: Date
+  deletedAt: Date | null
   _count: CustomerProfileCountAggregateOutputType | null
   _avg: CustomerProfileAvgAggregateOutputType | null
   _sum: CustomerProfileSumAggregateOutputType | null
@@ -244,6 +251,7 @@ export type CustomerProfileWhereInput = {
   notes?: Prisma.StringNullableFilter<"CustomerProfile"> | string | null
   createdAt?: Prisma.DateTimeFilter<"CustomerProfile"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"CustomerProfile"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"CustomerProfile"> | Date | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   address?: Prisma.XOR<Prisma.AddressNullableScalarRelationFilter, Prisma.AddressWhereInput> | null
 }
@@ -257,6 +265,7 @@ export type CustomerProfileOrderByWithRelationInput = {
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
   address?: Prisma.AddressOrderByWithRelationInput
 }
@@ -273,6 +282,7 @@ export type CustomerProfileWhereUniqueInput = Prisma.AtLeast<{
   notes?: Prisma.StringNullableFilter<"CustomerProfile"> | string | null
   createdAt?: Prisma.DateTimeFilter<"CustomerProfile"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"CustomerProfile"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"CustomerProfile"> | Date | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   address?: Prisma.XOR<Prisma.AddressNullableScalarRelationFilter, Prisma.AddressWhereInput> | null
 }, "id" | "userId">
@@ -286,6 +296,7 @@ export type CustomerProfileOrderByWithAggregationInput = {
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.CustomerProfileCountOrderByAggregateInput
   _avg?: Prisma.CustomerProfileAvgOrderByAggregateInput
   _max?: Prisma.CustomerProfileMaxOrderByAggregateInput
@@ -305,6 +316,7 @@ export type CustomerProfileScalarWhereWithAggregatesInput = {
   notes?: Prisma.StringNullableWithAggregatesFilter<"CustomerProfile"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"CustomerProfile"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"CustomerProfile"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CustomerProfile"> | Date | string | null
 }
 
 export type CustomerProfileCreateInput = {
@@ -314,6 +326,7 @@ export type CustomerProfileCreateInput = {
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   user: Prisma.UserCreateNestedOneWithoutCustomerProfileInput
   address?: Prisma.AddressCreateNestedOneWithoutCustomerDefaultInput
 }
@@ -327,6 +340,7 @@ export type CustomerProfileUncheckedCreateInput = {
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type CustomerProfileUpdateInput = {
@@ -336,6 +350,7 @@ export type CustomerProfileUpdateInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutCustomerProfileNestedInput
   address?: Prisma.AddressUpdateOneWithoutCustomerDefaultNestedInput
 }
@@ -349,6 +364,7 @@ export type CustomerProfileUncheckedUpdateInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type CustomerProfileCreateManyInput = {
@@ -360,6 +376,7 @@ export type CustomerProfileCreateManyInput = {
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type CustomerProfileUpdateManyMutationInput = {
@@ -369,6 +386,7 @@ export type CustomerProfileUpdateManyMutationInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type CustomerProfileUncheckedUpdateManyInput = {
@@ -380,6 +398,7 @@ export type CustomerProfileUncheckedUpdateManyInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type CustomerProfileNullableScalarRelationFilter = {
@@ -396,6 +415,7 @@ export type CustomerProfileCountOrderByAggregateInput = {
   notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
 }
 
 export type CustomerProfileAvgOrderByAggregateInput = {
@@ -412,6 +432,7 @@ export type CustomerProfileMaxOrderByAggregateInput = {
   notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
 }
 
 export type CustomerProfileMinOrderByAggregateInput = {
@@ -423,6 +444,7 @@ export type CustomerProfileMinOrderByAggregateInput = {
   notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
 }
 
 export type CustomerProfileSumOrderByAggregateInput = {
@@ -529,6 +551,7 @@ export type CustomerProfileCreateWithoutUserInput = {
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   address?: Prisma.AddressCreateNestedOneWithoutCustomerDefaultInput
 }
 
@@ -540,6 +563,7 @@ export type CustomerProfileUncheckedCreateWithoutUserInput = {
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type CustomerProfileCreateOrConnectWithoutUserInput = {
@@ -565,6 +589,7 @@ export type CustomerProfileUpdateWithoutUserInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   address?: Prisma.AddressUpdateOneWithoutCustomerDefaultNestedInput
 }
 
@@ -576,6 +601,7 @@ export type CustomerProfileUncheckedUpdateWithoutUserInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type CustomerProfileCreateWithoutAddressInput = {
@@ -585,6 +611,7 @@ export type CustomerProfileCreateWithoutAddressInput = {
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   user: Prisma.UserCreateNestedOneWithoutCustomerProfileInput
 }
 
@@ -596,6 +623,7 @@ export type CustomerProfileUncheckedCreateWithoutAddressInput = {
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type CustomerProfileCreateOrConnectWithoutAddressInput = {
@@ -636,6 +664,7 @@ export type CustomerProfileScalarWhereInput = {
   notes?: Prisma.StringNullableFilter<"CustomerProfile"> | string | null
   createdAt?: Prisma.DateTimeFilter<"CustomerProfile"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"CustomerProfile"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"CustomerProfile"> | Date | string | null
 }
 
 export type CustomerProfileCreateManyAddressInput = {
@@ -646,6 +675,7 @@ export type CustomerProfileCreateManyAddressInput = {
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type CustomerProfileUpdateWithoutAddressInput = {
@@ -655,6 +685,7 @@ export type CustomerProfileUpdateWithoutAddressInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutCustomerProfileNestedInput
 }
 
@@ -666,6 +697,7 @@ export type CustomerProfileUncheckedUpdateWithoutAddressInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type CustomerProfileUncheckedUpdateManyWithoutAddressInput = {
@@ -676,6 +708,7 @@ export type CustomerProfileUncheckedUpdateManyWithoutAddressInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 
@@ -689,6 +722,7 @@ export type CustomerProfileSelect<ExtArgs extends runtime.Types.Extensions.Inter
   notes?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   address?: boolean | Prisma.CustomerProfile$addressArgs<ExtArgs>
 }, ExtArgs["result"]["customerProfile"]>
@@ -702,6 +736,7 @@ export type CustomerProfileSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   notes?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   address?: boolean | Prisma.CustomerProfile$addressArgs<ExtArgs>
 }, ExtArgs["result"]["customerProfile"]>
@@ -715,6 +750,7 @@ export type CustomerProfileSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   notes?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   address?: boolean | Prisma.CustomerProfile$addressArgs<ExtArgs>
 }, ExtArgs["result"]["customerProfile"]>
@@ -728,9 +764,10 @@ export type CustomerProfileSelectScalar = {
   notes?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedAt?: boolean
 }
 
-export type CustomerProfileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "defaultAddressId" | "loyaltyPoints" | "totalShipments" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["customerProfile"]>
+export type CustomerProfileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "defaultAddressId" | "loyaltyPoints" | "totalShipments" | "notes" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["customerProfile"]>
 export type CustomerProfileInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   address?: boolean | Prisma.CustomerProfile$addressArgs<ExtArgs>
@@ -759,6 +796,7 @@ export type $CustomerProfilePayload<ExtArgs extends runtime.Types.Extensions.Int
     notes: string | null
     createdAt: Date
     updatedAt: Date
+    deletedAt: Date | null
   }, ExtArgs["result"]["customerProfile"]>
   composites: {}
 }
@@ -1192,6 +1230,7 @@ export interface CustomerProfileFieldRefs {
   readonly notes: Prisma.FieldRef<"CustomerProfile", 'String'>
   readonly createdAt: Prisma.FieldRef<"CustomerProfile", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"CustomerProfile", 'DateTime'>
+  readonly deletedAt: Prisma.FieldRef<"CustomerProfile", 'DateTime'>
 }
     
 

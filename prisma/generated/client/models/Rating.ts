@@ -43,6 +43,7 @@ export type RatingMinAggregateOutputType = {
   comment: string | null
   createdAt: Date | null
   updatedAt: Date | null
+  deletedAt: Date | null
 }
 
 export type RatingMaxAggregateOutputType = {
@@ -54,6 +55,7 @@ export type RatingMaxAggregateOutputType = {
   comment: string | null
   createdAt: Date | null
   updatedAt: Date | null
+  deletedAt: Date | null
 }
 
 export type RatingCountAggregateOutputType = {
@@ -65,6 +67,7 @@ export type RatingCountAggregateOutputType = {
   comment: number
   createdAt: number
   updatedAt: number
+  deletedAt: number
   _all: number
 }
 
@@ -86,6 +89,7 @@ export type RatingMinAggregateInputType = {
   comment?: true
   createdAt?: true
   updatedAt?: true
+  deletedAt?: true
 }
 
 export type RatingMaxAggregateInputType = {
@@ -97,6 +101,7 @@ export type RatingMaxAggregateInputType = {
   comment?: true
   createdAt?: true
   updatedAt?: true
+  deletedAt?: true
 }
 
 export type RatingCountAggregateInputType = {
@@ -108,6 +113,7 @@ export type RatingCountAggregateInputType = {
   comment?: true
   createdAt?: true
   updatedAt?: true
+  deletedAt?: true
   _all?: true
 }
 
@@ -206,6 +212,7 @@ export type RatingGroupByOutputType = {
   comment: string | null
   createdAt: Date
   updatedAt: Date
+  deletedAt: Date | null
   _count: RatingCountAggregateOutputType | null
   _avg: RatingAvgAggregateOutputType | null
   _sum: RatingSumAggregateOutputType | null
@@ -240,6 +247,7 @@ export type RatingWhereInput = {
   comment?: Prisma.StringNullableFilter<"Rating"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Rating"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Rating"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"Rating"> | Date | string | null
   shipment?: Prisma.XOR<Prisma.ShipmentScalarRelationFilter, Prisma.ShipmentWhereInput>
   customer?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }
@@ -253,6 +261,7 @@ export type RatingOrderByWithRelationInput = {
   comment?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   shipment?: Prisma.ShipmentOrderByWithRelationInput
   customer?: Prisma.UserOrderByWithRelationInput
 }
@@ -269,6 +278,7 @@ export type RatingWhereUniqueInput = Prisma.AtLeast<{
   comment?: Prisma.StringNullableFilter<"Rating"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Rating"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Rating"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"Rating"> | Date | string | null
   shipment?: Prisma.XOR<Prisma.ShipmentScalarRelationFilter, Prisma.ShipmentWhereInput>
   customer?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }, "id" | "shipmentId">
@@ -282,6 +292,7 @@ export type RatingOrderByWithAggregationInput = {
   comment?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.RatingCountOrderByAggregateInput
   _avg?: Prisma.RatingAvgOrderByAggregateInput
   _max?: Prisma.RatingMaxOrderByAggregateInput
@@ -301,6 +312,7 @@ export type RatingScalarWhereWithAggregatesInput = {
   comment?: Prisma.StringNullableWithAggregatesFilter<"Rating"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Rating"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Rating"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Rating"> | Date | string | null
 }
 
 export type RatingCreateInput = {
@@ -310,6 +322,7 @@ export type RatingCreateInput = {
   comment?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   shipment: Prisma.ShipmentCreateNestedOneWithoutRatingInput
   customer: Prisma.UserCreateNestedOneWithoutRatingsGivenInput
 }
@@ -323,6 +336,7 @@ export type RatingUncheckedCreateInput = {
   comment?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type RatingUpdateInput = {
@@ -332,6 +346,7 @@ export type RatingUpdateInput = {
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shipment?: Prisma.ShipmentUpdateOneRequiredWithoutRatingNestedInput
   customer?: Prisma.UserUpdateOneRequiredWithoutRatingsGivenNestedInput
 }
@@ -345,6 +360,7 @@ export type RatingUncheckedUpdateInput = {
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type RatingCreateManyInput = {
@@ -356,6 +372,7 @@ export type RatingCreateManyInput = {
   comment?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type RatingUpdateManyMutationInput = {
@@ -365,6 +382,7 @@ export type RatingUpdateManyMutationInput = {
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type RatingUncheckedUpdateManyInput = {
@@ -376,6 +394,7 @@ export type RatingUncheckedUpdateManyInput = {
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type RatingListRelationFilter = {
@@ -402,6 +421,7 @@ export type RatingCountOrderByAggregateInput = {
   comment?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
 }
 
 export type RatingAvgOrderByAggregateInput = {
@@ -417,6 +437,7 @@ export type RatingMaxOrderByAggregateInput = {
   comment?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
 }
 
 export type RatingMinOrderByAggregateInput = {
@@ -428,6 +449,7 @@ export type RatingMinOrderByAggregateInput = {
   comment?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
 }
 
 export type RatingSumOrderByAggregateInput = {
@@ -515,6 +537,7 @@ export type RatingCreateWithoutCustomerInput = {
   comment?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   shipment: Prisma.ShipmentCreateNestedOneWithoutRatingInput
 }
 
@@ -526,6 +549,7 @@ export type RatingUncheckedCreateWithoutCustomerInput = {
   comment?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type RatingCreateOrConnectWithoutCustomerInput = {
@@ -566,6 +590,7 @@ export type RatingScalarWhereInput = {
   comment?: Prisma.StringNullableFilter<"Rating"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Rating"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Rating"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"Rating"> | Date | string | null
 }
 
 export type RatingCreateWithoutShipmentInput = {
@@ -575,6 +600,7 @@ export type RatingCreateWithoutShipmentInput = {
   comment?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   customer: Prisma.UserCreateNestedOneWithoutRatingsGivenInput
 }
 
@@ -586,6 +612,7 @@ export type RatingUncheckedCreateWithoutShipmentInput = {
   comment?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type RatingCreateOrConnectWithoutShipmentInput = {
@@ -611,6 +638,7 @@ export type RatingUpdateWithoutShipmentInput = {
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   customer?: Prisma.UserUpdateOneRequiredWithoutRatingsGivenNestedInput
 }
 
@@ -622,6 +650,7 @@ export type RatingUncheckedUpdateWithoutShipmentInput = {
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type RatingCreateManyCustomerInput = {
@@ -632,6 +661,7 @@ export type RatingCreateManyCustomerInput = {
   comment?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type RatingUpdateWithoutCustomerInput = {
@@ -641,6 +671,7 @@ export type RatingUpdateWithoutCustomerInput = {
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shipment?: Prisma.ShipmentUpdateOneRequiredWithoutRatingNestedInput
 }
 
@@ -652,6 +683,7 @@ export type RatingUncheckedUpdateWithoutCustomerInput = {
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type RatingUncheckedUpdateManyWithoutCustomerInput = {
@@ -662,6 +694,7 @@ export type RatingUncheckedUpdateManyWithoutCustomerInput = {
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 
@@ -675,6 +708,7 @@ export type RatingSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   comment?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedAt?: boolean
   shipment?: boolean | Prisma.ShipmentDefaultArgs<ExtArgs>
   customer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["rating"]>
@@ -688,6 +722,7 @@ export type RatingSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   comment?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedAt?: boolean
   shipment?: boolean | Prisma.ShipmentDefaultArgs<ExtArgs>
   customer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["rating"]>
@@ -701,6 +736,7 @@ export type RatingSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   comment?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedAt?: boolean
   shipment?: boolean | Prisma.ShipmentDefaultArgs<ExtArgs>
   customer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["rating"]>
@@ -714,9 +750,10 @@ export type RatingSelectScalar = {
   comment?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedAt?: boolean
 }
 
-export type RatingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "shipmentId" | "customerId" | "courierId" | "stars" | "comment" | "createdAt" | "updatedAt", ExtArgs["result"]["rating"]>
+export type RatingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "shipmentId" | "customerId" | "courierId" | "stars" | "comment" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["rating"]>
 export type RatingInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   shipment?: boolean | Prisma.ShipmentDefaultArgs<ExtArgs>
   customer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -745,6 +782,7 @@ export type $RatingPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     comment: string | null
     createdAt: Date
     updatedAt: Date
+    deletedAt: Date | null
   }, ExtArgs["result"]["rating"]>
   composites: {}
 }
@@ -1178,6 +1216,7 @@ export interface RatingFieldRefs {
   readonly comment: Prisma.FieldRef<"Rating", 'String'>
   readonly createdAt: Prisma.FieldRef<"Rating", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Rating", 'DateTime'>
+  readonly deletedAt: Prisma.FieldRef<"Rating", 'DateTime'>
 }
     
 

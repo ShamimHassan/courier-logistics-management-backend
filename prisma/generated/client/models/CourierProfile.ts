@@ -58,6 +58,7 @@ export type CourierProfileMinAggregateOutputType = {
   notes: string | null
   createdAt: Date | null
   updatedAt: Date | null
+  deletedAt: Date | null
 }
 
 export type CourierProfileMaxAggregateOutputType = {
@@ -76,6 +77,7 @@ export type CourierProfileMaxAggregateOutputType = {
   notes: string | null
   createdAt: Date | null
   updatedAt: Date | null
+  deletedAt: Date | null
 }
 
 export type CourierProfileCountAggregateOutputType = {
@@ -94,6 +96,7 @@ export type CourierProfileCountAggregateOutputType = {
   notes: number
   createdAt: number
   updatedAt: number
+  deletedAt: number
   _all: number
 }
 
@@ -130,6 +133,7 @@ export type CourierProfileMinAggregateInputType = {
   notes?: true
   createdAt?: true
   updatedAt?: true
+  deletedAt?: true
 }
 
 export type CourierProfileMaxAggregateInputType = {
@@ -148,6 +152,7 @@ export type CourierProfileMaxAggregateInputType = {
   notes?: true
   createdAt?: true
   updatedAt?: true
+  deletedAt?: true
 }
 
 export type CourierProfileCountAggregateInputType = {
@@ -166,6 +171,7 @@ export type CourierProfileCountAggregateInputType = {
   notes?: true
   createdAt?: true
   updatedAt?: true
+  deletedAt?: true
   _all?: true
 }
 
@@ -271,6 +277,7 @@ export type CourierProfileGroupByOutputType = {
   notes: string | null
   createdAt: Date
   updatedAt: Date
+  deletedAt: Date | null
   _count: CourierProfileCountAggregateOutputType | null
   _avg: CourierProfileAvgAggregateOutputType | null
   _sum: CourierProfileSumAggregateOutputType | null
@@ -312,6 +319,7 @@ export type CourierProfileWhereInput = {
   notes?: Prisma.StringNullableFilter<"CourierProfile"> | string | null
   createdAt?: Prisma.DateTimeFilter<"CourierProfile"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"CourierProfile"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"CourierProfile"> | Date | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   serviceZones?: Prisma.CourierZoneListRelationFilter
   assignments?: Prisma.CourierAssignmentListRelationFilter
@@ -333,6 +341,7 @@ export type CourierProfileOrderByWithRelationInput = {
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
   serviceZones?: Prisma.CourierZoneOrderByRelationAggregateInput
   assignments?: Prisma.CourierAssignmentOrderByRelationAggregateInput
@@ -357,6 +366,7 @@ export type CourierProfileWhereUniqueInput = Prisma.AtLeast<{
   notes?: Prisma.StringNullableFilter<"CourierProfile"> | string | null
   createdAt?: Prisma.DateTimeFilter<"CourierProfile"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"CourierProfile"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"CourierProfile"> | Date | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   serviceZones?: Prisma.CourierZoneListRelationFilter
   assignments?: Prisma.CourierAssignmentListRelationFilter
@@ -378,6 +388,7 @@ export type CourierProfileOrderByWithAggregationInput = {
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.CourierProfileCountOrderByAggregateInput
   _avg?: Prisma.CourierProfileAvgOrderByAggregateInput
   _max?: Prisma.CourierProfileMaxOrderByAggregateInput
@@ -404,6 +415,7 @@ export type CourierProfileScalarWhereWithAggregatesInput = {
   notes?: Prisma.StringNullableWithAggregatesFilter<"CourierProfile"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"CourierProfile"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"CourierProfile"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CourierProfile"> | Date | string | null
 }
 
 export type CourierProfileCreateInput = {
@@ -421,6 +433,7 @@ export type CourierProfileCreateInput = {
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   user: Prisma.UserCreateNestedOneWithoutCourierProfileInput
   serviceZones?: Prisma.CourierZoneCreateNestedManyWithoutCourierInput
   assignments?: Prisma.CourierAssignmentCreateNestedManyWithoutCourierInput
@@ -442,6 +455,7 @@ export type CourierProfileUncheckedCreateInput = {
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   serviceZones?: Prisma.CourierZoneUncheckedCreateNestedManyWithoutCourierInput
   assignments?: Prisma.CourierAssignmentUncheckedCreateNestedManyWithoutCourierInput
 }
@@ -461,6 +475,7 @@ export type CourierProfileUpdateInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutCourierProfileNestedInput
   serviceZones?: Prisma.CourierZoneUpdateManyWithoutCourierNestedInput
   assignments?: Prisma.CourierAssignmentUpdateManyWithoutCourierNestedInput
@@ -482,6 +497,7 @@ export type CourierProfileUncheckedUpdateInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   serviceZones?: Prisma.CourierZoneUncheckedUpdateManyWithoutCourierNestedInput
   assignments?: Prisma.CourierAssignmentUncheckedUpdateManyWithoutCourierNestedInput
 }
@@ -502,6 +518,7 @@ export type CourierProfileCreateManyInput = {
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type CourierProfileUpdateManyMutationInput = {
@@ -519,6 +536,7 @@ export type CourierProfileUpdateManyMutationInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type CourierProfileUncheckedUpdateManyInput = {
@@ -537,6 +555,7 @@ export type CourierProfileUncheckedUpdateManyInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type CourierProfileNullableScalarRelationFilter = {
@@ -560,6 +579,7 @@ export type CourierProfileCountOrderByAggregateInput = {
   notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
 }
 
 export type CourierProfileAvgOrderByAggregateInput = {
@@ -586,6 +606,7 @@ export type CourierProfileMaxOrderByAggregateInput = {
   notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
 }
 
 export type CourierProfileMinOrderByAggregateInput = {
@@ -604,6 +625,7 @@ export type CourierProfileMinOrderByAggregateInput = {
   notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
 }
 
 export type CourierProfileSumOrderByAggregateInput = {
@@ -710,6 +732,7 @@ export type CourierProfileCreateWithoutUserInput = {
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   serviceZones?: Prisma.CourierZoneCreateNestedManyWithoutCourierInput
   assignments?: Prisma.CourierAssignmentCreateNestedManyWithoutCourierInput
 }
@@ -729,6 +752,7 @@ export type CourierProfileUncheckedCreateWithoutUserInput = {
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   serviceZones?: Prisma.CourierZoneUncheckedCreateNestedManyWithoutCourierInput
   assignments?: Prisma.CourierAssignmentUncheckedCreateNestedManyWithoutCourierInput
 }
@@ -764,6 +788,7 @@ export type CourierProfileUpdateWithoutUserInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   serviceZones?: Prisma.CourierZoneUpdateManyWithoutCourierNestedInput
   assignments?: Prisma.CourierAssignmentUpdateManyWithoutCourierNestedInput
 }
@@ -783,6 +808,7 @@ export type CourierProfileUncheckedUpdateWithoutUserInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   serviceZones?: Prisma.CourierZoneUncheckedUpdateManyWithoutCourierNestedInput
   assignments?: Prisma.CourierAssignmentUncheckedUpdateManyWithoutCourierNestedInput
 }
@@ -802,6 +828,7 @@ export type CourierProfileCreateWithoutServiceZonesInput = {
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   user: Prisma.UserCreateNestedOneWithoutCourierProfileInput
   assignments?: Prisma.CourierAssignmentCreateNestedManyWithoutCourierInput
 }
@@ -822,6 +849,7 @@ export type CourierProfileUncheckedCreateWithoutServiceZonesInput = {
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   assignments?: Prisma.CourierAssignmentUncheckedCreateNestedManyWithoutCourierInput
 }
 
@@ -856,6 +884,7 @@ export type CourierProfileUpdateWithoutServiceZonesInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutCourierProfileNestedInput
   assignments?: Prisma.CourierAssignmentUpdateManyWithoutCourierNestedInput
 }
@@ -876,6 +905,7 @@ export type CourierProfileUncheckedUpdateWithoutServiceZonesInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   assignments?: Prisma.CourierAssignmentUncheckedUpdateManyWithoutCourierNestedInput
 }
 
@@ -894,6 +924,7 @@ export type CourierProfileCreateWithoutAssignmentsInput = {
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   user: Prisma.UserCreateNestedOneWithoutCourierProfileInput
   serviceZones?: Prisma.CourierZoneCreateNestedManyWithoutCourierInput
 }
@@ -914,6 +945,7 @@ export type CourierProfileUncheckedCreateWithoutAssignmentsInput = {
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   serviceZones?: Prisma.CourierZoneUncheckedCreateNestedManyWithoutCourierInput
 }
 
@@ -948,6 +980,7 @@ export type CourierProfileUpdateWithoutAssignmentsInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutCourierProfileNestedInput
   serviceZones?: Prisma.CourierZoneUpdateManyWithoutCourierNestedInput
 }
@@ -968,6 +1001,7 @@ export type CourierProfileUncheckedUpdateWithoutAssignmentsInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   serviceZones?: Prisma.CourierZoneUncheckedUpdateManyWithoutCourierNestedInput
 }
 
@@ -1027,6 +1061,7 @@ export type CourierProfileSelect<ExtArgs extends runtime.Types.Extensions.Intern
   notes?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   serviceZones?: boolean | Prisma.CourierProfile$serviceZonesArgs<ExtArgs>
   assignments?: boolean | Prisma.CourierProfile$assignmentsArgs<ExtArgs>
@@ -1049,6 +1084,7 @@ export type CourierProfileSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   notes?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["courierProfile"]>
 
@@ -1068,6 +1104,7 @@ export type CourierProfileSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   notes?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["courierProfile"]>
 
@@ -1087,9 +1124,10 @@ export type CourierProfileSelectScalar = {
   notes?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedAt?: boolean
 }
 
-export type CourierProfileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "approvalStatus" | "vehicleType" | "vehiclePlateNumber" | "driverLicenseNumber" | "available" | "averageRating" | "totalRatings" | "totalDeliveries" | "totalEarnings" | "coverageRadiusKm" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["courierProfile"]>
+export type CourierProfileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "approvalStatus" | "vehicleType" | "vehiclePlateNumber" | "driverLicenseNumber" | "available" | "averageRating" | "totalRatings" | "totalDeliveries" | "totalEarnings" | "coverageRadiusKm" | "notes" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["courierProfile"]>
 export type CourierProfileInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   serviceZones?: boolean | Prisma.CourierProfile$serviceZonesArgs<ExtArgs>
@@ -1126,6 +1164,7 @@ export type $CourierProfilePayload<ExtArgs extends runtime.Types.Extensions.Inte
     notes: string | null
     createdAt: Date
     updatedAt: Date
+    deletedAt: Date | null
   }, ExtArgs["result"]["courierProfile"]>
   composites: {}
 }
@@ -1567,6 +1606,7 @@ export interface CourierProfileFieldRefs {
   readonly notes: Prisma.FieldRef<"CourierProfile", 'String'>
   readonly createdAt: Prisma.FieldRef<"CourierProfile", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"CourierProfile", 'DateTime'>
+  readonly deletedAt: Prisma.FieldRef<"CourierProfile", 'DateTime'>
 }
     
 

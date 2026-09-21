@@ -115,7 +115,8 @@ export const CustomerProfileScalarFieldEnum = {
   totalShipments: 'totalShipments',
   notes: 'notes',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
 } as const
 
 export type CustomerProfileScalarFieldEnum = (typeof CustomerProfileScalarFieldEnum)[keyof typeof CustomerProfileScalarFieldEnum]
@@ -136,7 +137,8 @@ export const CourierProfileScalarFieldEnum = {
   coverageRadiusKm: 'coverageRadiusKm',
   notes: 'notes',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
 } as const
 
 export type CourierProfileScalarFieldEnum = (typeof CourierProfileScalarFieldEnum)[keyof typeof CourierProfileScalarFieldEnum]
@@ -204,7 +206,8 @@ export const AddressScalarFieldEnum = {
   latitude: 'latitude',
   longitude: 'longitude',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
 } as const
 
 export type AddressScalarFieldEnum = (typeof AddressScalarFieldEnum)[keyof typeof AddressScalarFieldEnum]
@@ -269,7 +272,8 @@ export const CourierAssignmentScalarFieldEnum = {
   completedAt: 'completedAt',
   earnings: 'earnings',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
 } as const
 
 export type CourierAssignmentScalarFieldEnum = (typeof CourierAssignmentScalarFieldEnum)[keyof typeof CourierAssignmentScalarFieldEnum]
@@ -329,7 +333,8 @@ export const PaymentScalarFieldEnum = {
   disputeReason: 'disputeReason',
   disputeResolvedAt: 'disputeResolvedAt',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
 } as const
 
 export type PaymentScalarFieldEnum = (typeof PaymentScalarFieldEnum)[keyof typeof PaymentScalarFieldEnum]
@@ -357,7 +362,8 @@ export const RatingScalarFieldEnum = {
   stars: 'stars',
   comment: 'comment',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
 } as const
 
 export type RatingScalarFieldEnum = (typeof RatingScalarFieldEnum)[keyof typeof RatingScalarFieldEnum]
@@ -382,7 +388,8 @@ export const PricingRuleScalarFieldEnum = {
   effectiveFrom: 'effectiveFrom',
   effectiveUntil: 'effectiveUntil',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
 } as const
 
 export type PricingRuleScalarFieldEnum = (typeof PricingRuleScalarFieldEnum)[keyof typeof PricingRuleScalarFieldEnum]
@@ -399,7 +406,10 @@ export const NotificationScalarFieldEnum = {
   metadata: 'metadata',
   isRead: 'isRead',
   readAt: 'readAt',
-  sentAt: 'sentAt'
+  sentAt: 'sentAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
 } as const
 
 export type NotificationScalarFieldEnum = (typeof NotificationScalarFieldEnum)[keyof typeof NotificationScalarFieldEnum]

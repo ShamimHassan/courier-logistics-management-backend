@@ -72,6 +72,7 @@ export type PricingRuleMinAggregateOutputType = {
   effectiveUntil: Date | null
   createdAt: Date | null
   updatedAt: Date | null
+  deletedAt: Date | null
 }
 
 export type PricingRuleMaxAggregateOutputType = {
@@ -94,6 +95,7 @@ export type PricingRuleMaxAggregateOutputType = {
   effectiveUntil: Date | null
   createdAt: Date | null
   updatedAt: Date | null
+  deletedAt: Date | null
 }
 
 export type PricingRuleCountAggregateOutputType = {
@@ -116,6 +118,7 @@ export type PricingRuleCountAggregateOutputType = {
   effectiveUntil: number
   createdAt: number
   updatedAt: number
+  deletedAt: number
   _all: number
 }
 
@@ -166,6 +169,7 @@ export type PricingRuleMinAggregateInputType = {
   effectiveUntil?: true
   createdAt?: true
   updatedAt?: true
+  deletedAt?: true
 }
 
 export type PricingRuleMaxAggregateInputType = {
@@ -188,6 +192,7 @@ export type PricingRuleMaxAggregateInputType = {
   effectiveUntil?: true
   createdAt?: true
   updatedAt?: true
+  deletedAt?: true
 }
 
 export type PricingRuleCountAggregateInputType = {
@@ -210,6 +215,7 @@ export type PricingRuleCountAggregateInputType = {
   effectiveUntil?: true
   createdAt?: true
   updatedAt?: true
+  deletedAt?: true
   _all?: true
 }
 
@@ -319,6 +325,7 @@ export type PricingRuleGroupByOutputType = {
   effectiveUntil: Date | null
   createdAt: Date
   updatedAt: Date
+  deletedAt: Date | null
   _count: PricingRuleCountAggregateOutputType | null
   _avg: PricingRuleAvgAggregateOutputType | null
   _sum: PricingRuleSumAggregateOutputType | null
@@ -364,6 +371,7 @@ export type PricingRuleWhereInput = {
   effectiveUntil?: Prisma.DateTimeNullableFilter<"PricingRule"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"PricingRule"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"PricingRule"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"PricingRule"> | Date | string | null
   originZone?: Prisma.XOR<Prisma.ZoneNullableScalarRelationFilter, Prisma.ZoneWhereInput> | null
   destinationZone?: Prisma.XOR<Prisma.ZoneNullableScalarRelationFilter, Prisma.ZoneWhereInput> | null
 }
@@ -388,6 +396,7 @@ export type PricingRuleOrderByWithRelationInput = {
   effectiveUntil?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   originZone?: Prisma.ZoneOrderByWithRelationInput
   destinationZone?: Prisma.ZoneOrderByWithRelationInput
 }
@@ -415,6 +424,7 @@ export type PricingRuleWhereUniqueInput = Prisma.AtLeast<{
   effectiveUntil?: Prisma.DateTimeNullableFilter<"PricingRule"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"PricingRule"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"PricingRule"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"PricingRule"> | Date | string | null
   originZone?: Prisma.XOR<Prisma.ZoneNullableScalarRelationFilter, Prisma.ZoneWhereInput> | null
   destinationZone?: Prisma.XOR<Prisma.ZoneNullableScalarRelationFilter, Prisma.ZoneWhereInput> | null
 }, "id">
@@ -439,6 +449,7 @@ export type PricingRuleOrderByWithAggregationInput = {
   effectiveUntil?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.PricingRuleCountOrderByAggregateInput
   _avg?: Prisma.PricingRuleAvgOrderByAggregateInput
   _max?: Prisma.PricingRuleMaxOrderByAggregateInput
@@ -469,6 +480,7 @@ export type PricingRuleScalarWhereWithAggregatesInput = {
   effectiveUntil?: Prisma.DateTimeNullableWithAggregatesFilter<"PricingRule"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"PricingRule"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"PricingRule"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"PricingRule"> | Date | string | null
 }
 
 export type PricingRuleCreateInput = {
@@ -489,6 +501,7 @@ export type PricingRuleCreateInput = {
   effectiveUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   originZone?: Prisma.ZoneCreateNestedOneWithoutPricingRulesInput
   destinationZone?: Prisma.ZoneCreateNestedOneWithoutDestPricingInput
 }
@@ -513,6 +526,7 @@ export type PricingRuleUncheckedCreateInput = {
   effectiveUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type PricingRuleUpdateInput = {
@@ -533,6 +547,7 @@ export type PricingRuleUpdateInput = {
   effectiveUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   originZone?: Prisma.ZoneUpdateOneWithoutPricingRulesNestedInput
   destinationZone?: Prisma.ZoneUpdateOneWithoutDestPricingNestedInput
 }
@@ -557,6 +572,7 @@ export type PricingRuleUncheckedUpdateInput = {
   effectiveUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type PricingRuleCreateManyInput = {
@@ -579,6 +595,7 @@ export type PricingRuleCreateManyInput = {
   effectiveUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type PricingRuleUpdateManyMutationInput = {
@@ -599,6 +616,7 @@ export type PricingRuleUpdateManyMutationInput = {
   effectiveUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type PricingRuleUncheckedUpdateManyInput = {
@@ -621,6 +639,7 @@ export type PricingRuleUncheckedUpdateManyInput = {
   effectiveUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type PricingRuleListRelationFilter = {
@@ -653,6 +672,7 @@ export type PricingRuleCountOrderByAggregateInput = {
   effectiveUntil?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
 }
 
 export type PricingRuleAvgOrderByAggregateInput = {
@@ -688,6 +708,7 @@ export type PricingRuleMaxOrderByAggregateInput = {
   effectiveUntil?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
 }
 
 export type PricingRuleMinOrderByAggregateInput = {
@@ -710,6 +731,7 @@ export type PricingRuleMinOrderByAggregateInput = {
   effectiveUntil?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
 }
 
 export type PricingRuleSumOrderByAggregateInput = {
@@ -827,6 +849,7 @@ export type PricingRuleCreateWithoutOriginZoneInput = {
   effectiveUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   destinationZone?: Prisma.ZoneCreateNestedOneWithoutDestPricingInput
 }
 
@@ -849,6 +872,7 @@ export type PricingRuleUncheckedCreateWithoutOriginZoneInput = {
   effectiveUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type PricingRuleCreateOrConnectWithoutOriginZoneInput = {
@@ -879,6 +903,7 @@ export type PricingRuleCreateWithoutDestinationZoneInput = {
   effectiveUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   originZone?: Prisma.ZoneCreateNestedOneWithoutPricingRulesInput
 }
 
@@ -901,6 +926,7 @@ export type PricingRuleUncheckedCreateWithoutDestinationZoneInput = {
   effectiveUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type PricingRuleCreateOrConnectWithoutDestinationZoneInput = {
@@ -952,6 +978,7 @@ export type PricingRuleScalarWhereInput = {
   effectiveUntil?: Prisma.DateTimeNullableFilter<"PricingRule"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"PricingRule"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"PricingRule"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"PricingRule"> | Date | string | null
 }
 
 export type PricingRuleUpsertWithWhereUniqueWithoutDestinationZoneInput = {
@@ -989,6 +1016,7 @@ export type PricingRuleCreateManyOriginZoneInput = {
   effectiveUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type PricingRuleCreateManyDestinationZoneInput = {
@@ -1010,6 +1038,7 @@ export type PricingRuleCreateManyDestinationZoneInput = {
   effectiveUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type PricingRuleUpdateWithoutOriginZoneInput = {
@@ -1030,6 +1059,7 @@ export type PricingRuleUpdateWithoutOriginZoneInput = {
   effectiveUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   destinationZone?: Prisma.ZoneUpdateOneWithoutDestPricingNestedInput
 }
 
@@ -1052,6 +1082,7 @@ export type PricingRuleUncheckedUpdateWithoutOriginZoneInput = {
   effectiveUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type PricingRuleUncheckedUpdateManyWithoutOriginZoneInput = {
@@ -1073,6 +1104,7 @@ export type PricingRuleUncheckedUpdateManyWithoutOriginZoneInput = {
   effectiveUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type PricingRuleUpdateWithoutDestinationZoneInput = {
@@ -1093,6 +1125,7 @@ export type PricingRuleUpdateWithoutDestinationZoneInput = {
   effectiveUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   originZone?: Prisma.ZoneUpdateOneWithoutPricingRulesNestedInput
 }
 
@@ -1115,6 +1148,7 @@ export type PricingRuleUncheckedUpdateWithoutDestinationZoneInput = {
   effectiveUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type PricingRuleUncheckedUpdateManyWithoutDestinationZoneInput = {
@@ -1136,6 +1170,7 @@ export type PricingRuleUncheckedUpdateManyWithoutDestinationZoneInput = {
   effectiveUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 
@@ -1160,6 +1195,7 @@ export type PricingRuleSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   effectiveUntil?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedAt?: boolean
   originZone?: boolean | Prisma.PricingRule$originZoneArgs<ExtArgs>
   destinationZone?: boolean | Prisma.PricingRule$destinationZoneArgs<ExtArgs>
 }, ExtArgs["result"]["pricingRule"]>
@@ -1184,6 +1220,7 @@ export type PricingRuleSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   effectiveUntil?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedAt?: boolean
   originZone?: boolean | Prisma.PricingRule$originZoneArgs<ExtArgs>
   destinationZone?: boolean | Prisma.PricingRule$destinationZoneArgs<ExtArgs>
 }, ExtArgs["result"]["pricingRule"]>
@@ -1208,6 +1245,7 @@ export type PricingRuleSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   effectiveUntil?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedAt?: boolean
   originZone?: boolean | Prisma.PricingRule$originZoneArgs<ExtArgs>
   destinationZone?: boolean | Prisma.PricingRule$destinationZoneArgs<ExtArgs>
 }, ExtArgs["result"]["pricingRule"]>
@@ -1232,9 +1270,10 @@ export type PricingRuleSelectScalar = {
   effectiveUntil?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedAt?: boolean
 }
 
-export type PricingRuleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "originZoneId" | "destinationZoneId" | "serviceType" | "minWeightKg" | "maxWeightKg" | "basePrice" | "weightSurchargePerKg" | "expressFee" | "insuranceFeePercent" | "taxRatePercent" | "codFeePercent" | "codFeeMin" | "version" | "isActive" | "effectiveFrom" | "effectiveUntil" | "createdAt" | "updatedAt", ExtArgs["result"]["pricingRule"]>
+export type PricingRuleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "originZoneId" | "destinationZoneId" | "serviceType" | "minWeightKg" | "maxWeightKg" | "basePrice" | "weightSurchargePerKg" | "expressFee" | "insuranceFeePercent" | "taxRatePercent" | "codFeePercent" | "codFeeMin" | "version" | "isActive" | "effectiveFrom" | "effectiveUntil" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["pricingRule"]>
 export type PricingRuleInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   originZone?: boolean | Prisma.PricingRule$originZoneArgs<ExtArgs>
   destinationZone?: boolean | Prisma.PricingRule$destinationZoneArgs<ExtArgs>
@@ -1274,6 +1313,7 @@ export type $PricingRulePayload<ExtArgs extends runtime.Types.Extensions.Interna
     effectiveUntil: Date | null
     createdAt: Date
     updatedAt: Date
+    deletedAt: Date | null
   }, ExtArgs["result"]["pricingRule"]>
   composites: {}
 }
@@ -1718,6 +1758,7 @@ export interface PricingRuleFieldRefs {
   readonly effectiveUntil: Prisma.FieldRef<"PricingRule", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"PricingRule", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"PricingRule", 'DateTime'>
+  readonly deletedAt: Prisma.FieldRef<"PricingRule", 'DateTime'>
 }
     
 

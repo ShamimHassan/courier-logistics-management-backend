@@ -46,6 +46,7 @@ export type CourierAssignmentMinAggregateOutputType = {
   earnings: number | null
   createdAt: Date | null
   updatedAt: Date | null
+  deletedAt: Date | null
 }
 
 export type CourierAssignmentMaxAggregateOutputType = {
@@ -60,6 +61,7 @@ export type CourierAssignmentMaxAggregateOutputType = {
   earnings: number | null
   createdAt: Date | null
   updatedAt: Date | null
+  deletedAt: Date | null
 }
 
 export type CourierAssignmentCountAggregateOutputType = {
@@ -74,6 +76,7 @@ export type CourierAssignmentCountAggregateOutputType = {
   earnings: number
   createdAt: number
   updatedAt: number
+  deletedAt: number
   _all: number
 }
 
@@ -98,6 +101,7 @@ export type CourierAssignmentMinAggregateInputType = {
   earnings?: true
   createdAt?: true
   updatedAt?: true
+  deletedAt?: true
 }
 
 export type CourierAssignmentMaxAggregateInputType = {
@@ -112,6 +116,7 @@ export type CourierAssignmentMaxAggregateInputType = {
   earnings?: true
   createdAt?: true
   updatedAt?: true
+  deletedAt?: true
 }
 
 export type CourierAssignmentCountAggregateInputType = {
@@ -126,6 +131,7 @@ export type CourierAssignmentCountAggregateInputType = {
   earnings?: true
   createdAt?: true
   updatedAt?: true
+  deletedAt?: true
   _all?: true
 }
 
@@ -227,6 +233,7 @@ export type CourierAssignmentGroupByOutputType = {
   earnings: number
   createdAt: Date
   updatedAt: Date
+  deletedAt: Date | null
   _count: CourierAssignmentCountAggregateOutputType | null
   _avg: CourierAssignmentAvgAggregateOutputType | null
   _sum: CourierAssignmentSumAggregateOutputType | null
@@ -264,6 +271,7 @@ export type CourierAssignmentWhereInput = {
   earnings?: Prisma.IntFilter<"CourierAssignment"> | number
   createdAt?: Prisma.DateTimeFilter<"CourierAssignment"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"CourierAssignment"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"CourierAssignment"> | Date | string | null
   shipment?: Prisma.XOR<Prisma.ShipmentScalarRelationFilter, Prisma.ShipmentWhereInput>
   courier?: Prisma.XOR<Prisma.CourierProfileScalarRelationFilter, Prisma.CourierProfileWhereInput>
   deliveryAttempts?: Prisma.DeliveryAttemptListRelationFilter
@@ -281,6 +289,7 @@ export type CourierAssignmentOrderByWithRelationInput = {
   earnings?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   shipment?: Prisma.ShipmentOrderByWithRelationInput
   courier?: Prisma.CourierProfileOrderByWithRelationInput
   deliveryAttempts?: Prisma.DeliveryAttemptOrderByRelationAggregateInput
@@ -288,7 +297,7 @@ export type CourierAssignmentOrderByWithRelationInput = {
 
 export type CourierAssignmentWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  shipmentId_courierId_status?: Prisma.CourierAssignmentShipmentIdCourierIdStatusCompoundUniqueInput
+  shipmentId_courierId?: Prisma.CourierAssignmentShipmentIdCourierIdCompoundUniqueInput
   AND?: Prisma.CourierAssignmentWhereInput | Prisma.CourierAssignmentWhereInput[]
   OR?: Prisma.CourierAssignmentWhereInput[]
   NOT?: Prisma.CourierAssignmentWhereInput | Prisma.CourierAssignmentWhereInput[]
@@ -302,10 +311,11 @@ export type CourierAssignmentWhereUniqueInput = Prisma.AtLeast<{
   earnings?: Prisma.IntFilter<"CourierAssignment"> | number
   createdAt?: Prisma.DateTimeFilter<"CourierAssignment"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"CourierAssignment"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"CourierAssignment"> | Date | string | null
   shipment?: Prisma.XOR<Prisma.ShipmentScalarRelationFilter, Prisma.ShipmentWhereInput>
   courier?: Prisma.XOR<Prisma.CourierProfileScalarRelationFilter, Prisma.CourierProfileWhereInput>
   deliveryAttempts?: Prisma.DeliveryAttemptListRelationFilter
-}, "id" | "shipmentId_courierId_status">
+}, "id" | "shipmentId_courierId">
 
 export type CourierAssignmentOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -319,6 +329,7 @@ export type CourierAssignmentOrderByWithAggregationInput = {
   earnings?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.CourierAssignmentCountOrderByAggregateInput
   _avg?: Prisma.CourierAssignmentAvgOrderByAggregateInput
   _max?: Prisma.CourierAssignmentMaxOrderByAggregateInput
@@ -341,6 +352,7 @@ export type CourierAssignmentScalarWhereWithAggregatesInput = {
   earnings?: Prisma.IntWithAggregatesFilter<"CourierAssignment"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"CourierAssignment"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"CourierAssignment"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CourierAssignment"> | Date | string | null
 }
 
 export type CourierAssignmentCreateInput = {
@@ -353,6 +365,7 @@ export type CourierAssignmentCreateInput = {
   earnings?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   shipment: Prisma.ShipmentCreateNestedOneWithoutAssignmentsInput
   courier: Prisma.CourierProfileCreateNestedOneWithoutAssignmentsInput
   deliveryAttempts?: Prisma.DeliveryAttemptCreateNestedManyWithoutAssignmentInput
@@ -370,6 +383,7 @@ export type CourierAssignmentUncheckedCreateInput = {
   earnings?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   deliveryAttempts?: Prisma.DeliveryAttemptUncheckedCreateNestedManyWithoutAssignmentInput
 }
 
@@ -383,6 +397,7 @@ export type CourierAssignmentUpdateInput = {
   earnings?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shipment?: Prisma.ShipmentUpdateOneRequiredWithoutAssignmentsNestedInput
   courier?: Prisma.CourierProfileUpdateOneRequiredWithoutAssignmentsNestedInput
   deliveryAttempts?: Prisma.DeliveryAttemptUpdateManyWithoutAssignmentNestedInput
@@ -400,6 +415,7 @@ export type CourierAssignmentUncheckedUpdateInput = {
   earnings?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveryAttempts?: Prisma.DeliveryAttemptUncheckedUpdateManyWithoutAssignmentNestedInput
 }
 
@@ -415,6 +431,7 @@ export type CourierAssignmentCreateManyInput = {
   earnings?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type CourierAssignmentUpdateManyMutationInput = {
@@ -427,6 +444,7 @@ export type CourierAssignmentUpdateManyMutationInput = {
   earnings?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type CourierAssignmentUncheckedUpdateManyInput = {
@@ -441,6 +459,7 @@ export type CourierAssignmentUncheckedUpdateManyInput = {
   earnings?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type CourierAssignmentListRelationFilter = {
@@ -453,10 +472,9 @@ export type CourierAssignmentOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type CourierAssignmentShipmentIdCourierIdStatusCompoundUniqueInput = {
+export type CourierAssignmentShipmentIdCourierIdCompoundUniqueInput = {
   shipmentId: string
   courierId: string
-  status: $Enums.AssignmentStatus
 }
 
 export type CourierAssignmentCountOrderByAggregateInput = {
@@ -471,6 +489,7 @@ export type CourierAssignmentCountOrderByAggregateInput = {
   earnings?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
 }
 
 export type CourierAssignmentAvgOrderByAggregateInput = {
@@ -489,6 +508,7 @@ export type CourierAssignmentMaxOrderByAggregateInput = {
   earnings?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
 }
 
 export type CourierAssignmentMinOrderByAggregateInput = {
@@ -503,6 +523,7 @@ export type CourierAssignmentMinOrderByAggregateInput = {
   earnings?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
 }
 
 export type CourierAssignmentSumOrderByAggregateInput = {
@@ -628,6 +649,7 @@ export type CourierAssignmentCreateWithoutCourierInput = {
   earnings?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   shipment: Prisma.ShipmentCreateNestedOneWithoutAssignmentsInput
   deliveryAttempts?: Prisma.DeliveryAttemptCreateNestedManyWithoutAssignmentInput
 }
@@ -643,6 +665,7 @@ export type CourierAssignmentUncheckedCreateWithoutCourierInput = {
   earnings?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   deliveryAttempts?: Prisma.DeliveryAttemptUncheckedCreateNestedManyWithoutAssignmentInput
 }
 
@@ -687,6 +710,7 @@ export type CourierAssignmentScalarWhereInput = {
   earnings?: Prisma.IntFilter<"CourierAssignment"> | number
   createdAt?: Prisma.DateTimeFilter<"CourierAssignment"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"CourierAssignment"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"CourierAssignment"> | Date | string | null
 }
 
 export type CourierAssignmentCreateWithoutShipmentInput = {
@@ -699,6 +723,7 @@ export type CourierAssignmentCreateWithoutShipmentInput = {
   earnings?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   courier: Prisma.CourierProfileCreateNestedOneWithoutAssignmentsInput
   deliveryAttempts?: Prisma.DeliveryAttemptCreateNestedManyWithoutAssignmentInput
 }
@@ -714,6 +739,7 @@ export type CourierAssignmentUncheckedCreateWithoutShipmentInput = {
   earnings?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   deliveryAttempts?: Prisma.DeliveryAttemptUncheckedCreateNestedManyWithoutAssignmentInput
 }
 
@@ -753,6 +779,7 @@ export type CourierAssignmentCreateWithoutDeliveryAttemptsInput = {
   earnings?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   shipment: Prisma.ShipmentCreateNestedOneWithoutAssignmentsInput
   courier: Prisma.CourierProfileCreateNestedOneWithoutAssignmentsInput
 }
@@ -769,6 +796,7 @@ export type CourierAssignmentUncheckedCreateWithoutDeliveryAttemptsInput = {
   earnings?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type CourierAssignmentCreateOrConnectWithoutDeliveryAttemptsInput = {
@@ -797,6 +825,7 @@ export type CourierAssignmentUpdateWithoutDeliveryAttemptsInput = {
   earnings?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shipment?: Prisma.ShipmentUpdateOneRequiredWithoutAssignmentsNestedInput
   courier?: Prisma.CourierProfileUpdateOneRequiredWithoutAssignmentsNestedInput
 }
@@ -813,6 +842,7 @@ export type CourierAssignmentUncheckedUpdateWithoutDeliveryAttemptsInput = {
   earnings?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type CourierAssignmentCreateManyCourierInput = {
@@ -826,6 +856,7 @@ export type CourierAssignmentCreateManyCourierInput = {
   earnings?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type CourierAssignmentUpdateWithoutCourierInput = {
@@ -838,6 +869,7 @@ export type CourierAssignmentUpdateWithoutCourierInput = {
   earnings?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shipment?: Prisma.ShipmentUpdateOneRequiredWithoutAssignmentsNestedInput
   deliveryAttempts?: Prisma.DeliveryAttemptUpdateManyWithoutAssignmentNestedInput
 }
@@ -853,6 +885,7 @@ export type CourierAssignmentUncheckedUpdateWithoutCourierInput = {
   earnings?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveryAttempts?: Prisma.DeliveryAttemptUncheckedUpdateManyWithoutAssignmentNestedInput
 }
 
@@ -867,6 +900,7 @@ export type CourierAssignmentUncheckedUpdateManyWithoutCourierInput = {
   earnings?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type CourierAssignmentCreateManyShipmentInput = {
@@ -880,6 +914,7 @@ export type CourierAssignmentCreateManyShipmentInput = {
   earnings?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type CourierAssignmentUpdateWithoutShipmentInput = {
@@ -892,6 +927,7 @@ export type CourierAssignmentUpdateWithoutShipmentInput = {
   earnings?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   courier?: Prisma.CourierProfileUpdateOneRequiredWithoutAssignmentsNestedInput
   deliveryAttempts?: Prisma.DeliveryAttemptUpdateManyWithoutAssignmentNestedInput
 }
@@ -907,6 +943,7 @@ export type CourierAssignmentUncheckedUpdateWithoutShipmentInput = {
   earnings?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveryAttempts?: Prisma.DeliveryAttemptUncheckedUpdateManyWithoutAssignmentNestedInput
 }
 
@@ -921,6 +958,7 @@ export type CourierAssignmentUncheckedUpdateManyWithoutShipmentInput = {
   earnings?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 
@@ -966,6 +1004,7 @@ export type CourierAssignmentSelect<ExtArgs extends runtime.Types.Extensions.Int
   earnings?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedAt?: boolean
   shipment?: boolean | Prisma.ShipmentDefaultArgs<ExtArgs>
   courier?: boolean | Prisma.CourierProfileDefaultArgs<ExtArgs>
   deliveryAttempts?: boolean | Prisma.CourierAssignment$deliveryAttemptsArgs<ExtArgs>
@@ -984,6 +1023,7 @@ export type CourierAssignmentSelectCreateManyAndReturn<ExtArgs extends runtime.T
   earnings?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedAt?: boolean
   shipment?: boolean | Prisma.ShipmentDefaultArgs<ExtArgs>
   courier?: boolean | Prisma.CourierProfileDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["courierAssignment"]>
@@ -1000,6 +1040,7 @@ export type CourierAssignmentSelectUpdateManyAndReturn<ExtArgs extends runtime.T
   earnings?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedAt?: boolean
   shipment?: boolean | Prisma.ShipmentDefaultArgs<ExtArgs>
   courier?: boolean | Prisma.CourierProfileDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["courierAssignment"]>
@@ -1016,9 +1057,10 @@ export type CourierAssignmentSelectScalar = {
   earnings?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedAt?: boolean
 }
 
-export type CourierAssignmentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "shipmentId" | "courierId" | "status" | "acceptedAt" | "rejectedAt" | "rejectedReason" | "completedAt" | "earnings" | "createdAt" | "updatedAt", ExtArgs["result"]["courierAssignment"]>
+export type CourierAssignmentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "shipmentId" | "courierId" | "status" | "acceptedAt" | "rejectedAt" | "rejectedReason" | "completedAt" | "earnings" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["courierAssignment"]>
 export type CourierAssignmentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   shipment?: boolean | Prisma.ShipmentDefaultArgs<ExtArgs>
   courier?: boolean | Prisma.CourierProfileDefaultArgs<ExtArgs>
@@ -1053,6 +1095,7 @@ export type $CourierAssignmentPayload<ExtArgs extends runtime.Types.Extensions.I
     earnings: number
     createdAt: Date
     updatedAt: Date
+    deletedAt: Date | null
   }, ExtArgs["result"]["courierAssignment"]>
   composites: {}
 }
@@ -1490,6 +1533,7 @@ export interface CourierAssignmentFieldRefs {
   readonly earnings: Prisma.FieldRef<"CourierAssignment", 'Int'>
   readonly createdAt: Prisma.FieldRef<"CourierAssignment", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"CourierAssignment", 'DateTime'>
+  readonly deletedAt: Prisma.FieldRef<"CourierAssignment", 'DateTime'>
 }
     
 
