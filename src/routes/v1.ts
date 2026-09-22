@@ -17,6 +17,8 @@ router.get('/', (_req: Request, res: Response) => {
           login: '/api/v1/auth/login',
           refreshToken: '/api/v1/auth/refresh-token',
           logout: '/api/v1/auth/logout',
+          googleLogin: '/api/v1/auth/google',
+          googleCallback: '/api/v1/auth/google/callback',
         },
       },
     }),

@@ -1,13 +1,14 @@
 import { Router, type Request, type Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { successResponse } from '../../common/response';
-import { loginUser, logoutUser, registerCustomer, rotateRefreshToken } from './auth.service';
+import { loginUser, logoutUser, registerCustomer, rotateRefreshToken, googleOAuthCallback } from './auth.service';
 import {
   loginSchema,
   logoutSchema,
   refreshTokenSchema,
   registerSchema,
 } from './auth.validation';
+import { assertGoogleConfigured, buildGoogleAuthUrl, exchangeCodeForProfile } from './auth.google';
 
 const router = Router();
 
@@ -77,6 +78,54 @@ router.post('/logout', async (req: Request, res: Response) => {
 
   res.status(StatusCodes.OK).json(
     successResponse('Logged out successfully', null),
+  );
+});
+
+// ─── Google OAuth: redirect to consent screen ────────────────────────────────
+
+router.get('/google', (_req: Request, res: Response) => {
+  // assertGoogleConfigured throws 501 if env vars are missing
+  assertGoogleConfigured();
+  const url = buildGoogleAuthUrl();
+  res.redirect(302, url);
+});
+
+// ─── Google OAuth: callback ───────────────────────────────────────────────────
+
+router.get('/google/callback', async (req: Request, res: Response) => {
+  const { code, error } = req.query as { code?: string; error?: string };
+
+  // Google sends ?error=access_denied when the user cancels
+  if (error) {
+    res.status(StatusCodes.BAD_REQUEST).json(
+      successResponse('Google OAuth cancelled', { error }),
+    );
+    return;
+  }
+
+  if (!code || typeof code !== 'string') {
+    res.status(StatusCodes.BAD_REQUEST).json({
+      success: false,
+      message: 'Missing authorization code from Google',
+      errors: [{ code: 'MISSING_CODE', message: 'No authorization code was provided' }],
+    });
+    return;
+  }
+
+  const profile = await exchangeCodeForProfile(code);
+  const { user, accessToken, refreshToken, expiresIn } = await googleOAuthCallback(
+    profile,
+    req.get('user-agent'),
+    req.ip,
+  );
+
+  res.status(StatusCodes.OK).json(
+    successResponse('Google login successful', {
+      user,
+      accessToken,
+      refreshToken,
+      expiresIn,
+    }),
   );
 });
 

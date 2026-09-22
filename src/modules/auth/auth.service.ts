@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import { randomBytes } from 'node:crypto';
 import { Role, UserStatus } from '../../../prisma/generated/client/enums';
 import { prisma } from '../../config/database';
 import {
@@ -14,6 +15,7 @@ import {
   signAccessToken,
   verifyRefreshTokenHash,
 } from './auth.token';
+import type { GoogleProfile } from './auth.google';
 
 const PASSWORD_HASH_ROUNDS = 12;
 
@@ -299,4 +301,84 @@ export const logoutUser = async (rawToken: string, userId?: string) => {
     }
   }
   // Token not found or already revoked — idempotent, treat as success
+};
+
+// ─── Google OAuth callback ────────────────────────────────────────────────────
+
+/**
+ * Handle the Google OAuth callback after the user consents.
+ * Three paths:
+ *  1. User exists by googleSubject  → issue tokens directly
+ *  2. User exists by email          → link googleSubject, then issue tokens
+ *  3. No user found                 → auto-create CUSTOMER, then issue tokens
+ */
+export const googleOAuthCallback = async (
+  profile: GoogleProfile,
+  userAgent?: string,
+  ipAddress?: string,
+) => {
+  // Path 1: existing user matched by googleSubject
+  let user = await prisma.user.findUnique({
+    where: { googleSubject: profile.sub },
+    select: authUserSelect,
+  });
+
+  if (!user) {
+    // Path 2: existing user matched by email — link the Google account
+    const existingByEmail = await prisma.user.findUnique({
+      where: { email: profile.email.toLowerCase() },
+      select: { id: true },
+    });
+
+    if (existingByEmail) {
+      user = await prisma.user.update({
+        where: { id: existingByEmail.id },
+        data: {
+          googleSubject: profile.sub,
+          profileImageUrl: profile.picture ?? undefined,
+          lastLoginAt: new Date(),
+        },
+        select: authUserSelect,
+      });
+    } else {
+      // Path 3: brand-new user — auto-create CUSTOMER with random unusable password
+      const randomPassword = randomBytes(32).toString('hex');
+      const passwordHash = await bcrypt.hash(randomPassword, PASSWORD_HASH_ROUNDS);
+
+      user = await prisma.user.create({
+        data: {
+          email: profile.email.toLowerCase(),
+          passwordHash,
+          googleSubject: profile.sub,
+          name: profile.name,
+          role: Role.CUSTOMER,
+          status: UserStatus.ACTIVE,
+          profileImageUrl: profile.picture ?? undefined,
+          customerProfile: { create: {} },
+        },
+        select: authUserSelect,
+      });
+    }
+  } else {
+    // Path 1: update lastLoginAt
+    user = await prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() },
+      select: authUserSelect,
+    });
+  }
+
+  if (user.status !== UserStatus.ACTIVE) {
+    throw ForbiddenError('Your account is not active');
+  }
+
+  const tokens = await issueTokens({
+    userId: user.id,
+    role: user.role as Role,
+    email: user.email,
+    userAgent,
+    ipAddress,
+  });
+
+  return { user, ...tokens };
 };
