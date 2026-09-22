@@ -35,6 +35,8 @@ router.get('/', (_req: Request, res: Response) => {
           availability: 'PATCH /api/v1/couriers/me/availability',
         },
         shipments: {
+          list: 'GET /api/v1/shipments',
+          myList: 'GET /api/v1/shipments/my',
           quote: 'POST /api/v1/shipments/quote',
           create: 'POST /api/v1/shipments',
         },

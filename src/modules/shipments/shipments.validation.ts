@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ServiceType } from '../../../prisma/generated/client/enums';
+import { ServiceType, ShipmentStatus } from '../../../prisma/generated/client/enums';
 
 const bangladeshPhoneRegex = /^(?:\+8801|01)[3-9]\d{8}$/;
 
@@ -131,3 +131,67 @@ export const createShipmentSchema = z.object({
 });
 
 export type CreateShipmentInput = z.infer<typeof createShipmentSchema>;
+
+// ─── List shipments query params ─────────────────────────────────────────────
+
+/** Columns the client is allowed to sort on — all others → 400 */
+const ALLOWED_SORT_FIELDS = ['createdAt', 'updatedAt', 'totalAmount', 'status'] as const;
+export type AllowedSortField = (typeof ALLOWED_SORT_FIELDS)[number];
+
+export const listShipmentsSchema = z.object({
+  // Pagination — clamped to sane bounds, never throw on out-of-range
+  page: z
+    .string()
+    .optional()
+    .transform((v) => {
+      const n = parseInt(v ?? '1', 10);
+      return isNaN(n) || n < 1 ? 1 : n;
+    }),
+
+  limit: z
+    .string()
+    .optional()
+    .transform((v) => {
+      const n = parseInt(v ?? '20', 10);
+      if (isNaN(n) || n < 1) return 20;
+      return Math.min(n, 100); // cap at 100
+    }),
+
+  // Filters — all optional
+  status: z
+    .enum(Object.values(ShipmentStatus) as [ShipmentStatus, ...ShipmentStatus[]])
+    .optional(),
+
+  serviceType: z
+    .enum(Object.values(ServiceType) as [ServiceType, ...ServiceType[]])
+    .optional(),
+
+  zoneId: z.string().cuid().optional(),
+
+  fromDate: z
+    .string()
+    .optional()
+    .transform((v) => (v ? new Date(v) : undefined))
+    .pipe(z.date().optional()),
+
+  toDate: z
+    .string()
+    .optional()
+    .transform((v) => (v ? new Date(v) : undefined))
+    .pipe(z.date().optional()),
+
+  // Sorting — unknown field throws 400 (caught by Zod .enum)
+  sortBy: z
+    .enum(ALLOWED_SORT_FIELDS, {
+      error: `sortBy must be one of: ${ALLOWED_SORT_FIELDS.join(', ')}`,
+    })
+    .optional()
+    .default('createdAt'),
+
+  sortOrder: z
+    .enum(['asc', 'desc'])
+    .optional()
+    .default('desc'),
+});
+
+export type ListShipmentsQuery = z.infer<typeof listShipmentsSchema>;

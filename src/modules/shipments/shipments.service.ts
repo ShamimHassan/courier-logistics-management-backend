@@ -360,3 +360,103 @@ export const createShipment = async (
 
   return { shipment, quote };
 };
+
+// ─── List shipments ───────────────────────────────────────────────────────────
+
+/** Lean select for listing — no full nesting to keep payloads small */
+const shipmentListSelect = {
+  id: true,
+  trackingNumber: true,
+  customerId: true,
+  serviceType: true,
+  status: true,
+  weightKg: true,
+  codAmount: true,
+  totalAmount: true,
+  currency: true,
+  createdAt: true,
+  updatedAt: true,
+  senderAddress: {
+    select: {
+      fullName: true,
+      city: true,
+      region: true,
+      zone: { select: { id: true, name: true, code: true } },
+    },
+  },
+  recipientAddress: {
+    select: {
+      fullName: true,
+      city: true,
+      region: true,
+      zone: { select: { id: true, name: true, code: true } },
+    },
+  },
+  originZone: { select: { id: true, name: true, code: true } },
+  destinationZone: { select: { id: true, name: true, code: true } },
+} as const;
+
+import type { ListShipmentsQuery } from './shipments.validation';
+
+export const listShipments = async (
+  query: ListShipmentsQuery,
+  /** Pass userId when role is CUSTOMER to scope ownership; undefined for ADMIN */
+  ownerId?: string,
+) => {
+  const { page, limit, status, serviceType, zoneId, fromDate, toDate, sortBy, sortOrder } = query;
+
+  // ── Build where clause ────────────────────────────────────────────────────
+  const where: Record<string, unknown> = {
+    deletedAt: null,
+  };
+
+  // Ownership scoping — customers only see their own shipments
+  if (ownerId) {
+    where.customerId = ownerId;
+  }
+
+  if (status) where.status = status;
+  if (serviceType) where.serviceType = serviceType;
+
+  // zoneId filters either origin OR destination
+  if (zoneId) {
+    where.OR = [
+      { originZoneId: zoneId },
+      { destinationZoneId: zoneId },
+    ];
+  }
+
+  // Date range on createdAt
+  if (fromDate || toDate) {
+    where.createdAt = {
+      ...(fromDate ? { gte: fromDate } : {}),
+      ...(toDate   ? { lte: toDate   } : {}),
+    };
+  }
+
+  // ── Count + fetch in parallel ─────────────────────────────────────────────
+  const skip = (page - 1) * limit;
+
+  const [totalCount, shipments] = await Promise.all([
+    prisma.shipment.count({ where }),
+    prisma.shipment.findMany({
+      where,
+      select: shipmentListSelect,
+      orderBy: { [sortBy]: sortOrder },
+      skip,
+      take: limit,
+    }),
+  ]);
+
+  const totalPages = Math.ceil(totalCount / limit);
+
+  return {
+    shipments,
+    meta: {
+      page,
+      limit,
+      totalCount,
+      totalPages,
+    },
+  };
+};
