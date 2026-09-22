@@ -6,6 +6,7 @@ import { authenticate } from '../common/middleware/authenticate';
 import { authorize } from '../common/middleware/authorize';
 import authRoutes from '../modules/auth/auth.routes';
 import usersRoutes from '../modules/users/users.routes';
+import couriersRoutes from '../modules/couriers/couriers.routes';
 
 const router = Router();
 
@@ -28,6 +29,10 @@ router.get('/', (_req: Request, res: Response) => {
           updateProfile: 'PATCH /api/v1/users/me',
           changePassword: 'PATCH /api/v1/users/me/password',
         },
+        couriers: {
+          me: 'GET /api/v1/couriers/me',
+          availability: 'PATCH /api/v1/couriers/me/availability',
+        },
       },
     }),
   );
@@ -46,6 +51,7 @@ router.get('/health', (_req: Request, res: Response) => {
 
 router.use('/auth', authRoutes);
 router.use('/users', usersRoutes);
+router.use('/couriers', couriersRoutes);
 
 // ─── Admin-only stub for RBAC test ────────────────────────────────────────────
 router.get('/admin/test', authenticate, authorize('ADMIN'), (_req: Request, res: Response) => {
