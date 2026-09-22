@@ -8,6 +8,7 @@ import authRoutes from '../modules/auth/auth.routes';
 import usersRoutes from '../modules/users/users.routes';
 import couriersRoutes from '../modules/couriers/couriers.routes';
 import shipmentsRoutes from '../modules/shipments/shipments.routes';
+import adminRoutes from '../modules/admin/admin.routes';
 
 const router = Router();
 
@@ -45,6 +46,10 @@ router.get('/', (_req: Request, res: Response) => {
           update: 'PATCH /api/v1/shipments/:id',
           cancel: 'POST /api/v1/shipments/:id/cancel',
         },
+        admin: {
+          assign: 'POST /api/v1/admin/shipments/:id/assign',
+          unassigned: 'GET /api/v1/admin/assignments/unassigned',
+        },
       },
     }),
   );
@@ -65,12 +70,11 @@ router.use('/auth', authRoutes);
 router.use('/users', usersRoutes);
 router.use('/couriers', couriersRoutes);
 router.use('/shipments', shipmentsRoutes);
+router.use('/admin', adminRoutes);
 
-// ─── Admin-only stub for RBAC test ────────────────────────────────────────────
+// ─── Admin-only stub for RBAC test (kept for Step 10 backward compat) ─────────
 router.get('/admin/test', authenticate, authorize('ADMIN'), (_req: Request, res: Response) => {
-  res.status(StatusCodes.OK).json(
-    successResponse('Admin access confirmed', null),
-  );
+  res.status(StatusCodes.OK).json(successResponse('Admin access confirmed', null));
 });
 
 export default router;
