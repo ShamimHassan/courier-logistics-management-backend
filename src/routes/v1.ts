@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { successResponse } from '../common/response';
 import { env } from '../config/env';
+import authRoutes from '../modules/auth/auth.routes';
 
 const router = Router();
 
@@ -11,6 +12,10 @@ router.get('/', (_req: Request, res: Response) => {
       version: '1.0.0',
       endpoints: {
         health: '/api/v1/health',
+        auth: {
+          register: '/api/v1/auth/register',
+          login: '/api/v1/auth/login',
+        },
       },
     }),
   );
@@ -26,5 +31,7 @@ router.get('/health', (_req: Request, res: Response) => {
     }),
   );
 });
+
+router.use('/auth', authRoutes);
 
 export default router;
