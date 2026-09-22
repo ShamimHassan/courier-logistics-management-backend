@@ -1,6 +1,8 @@
+import { randomBytes } from 'node:crypto';
+import { Role, ShipmentStatus } from '../../../prisma/generated/client/enums';
 import { prisma } from '../../config/database';
 import { BadRequestError, NotFoundError } from '../../common/errors/AppError';
-import type { QuoteInput } from './shipments.validation';
+import type { CreateShipmentInput, QuoteInput } from './shipments.validation';
 
 // ─── Quote calculation ────────────────────────────────────────────────────────
 
@@ -143,4 +145,218 @@ export const calculateQuote = async (input: QuoteInput) => {
       maxWeightKg: Number(rule.maxWeightKg),
     },
   };
+};
+
+// ─── Tracking number generation ───────────────────────────────────────────────
+
+/**
+ * Format: CFY + YYYYMMDD + 6 random uppercase alphanumeric chars
+ * e.g.  CFY20260922AB3X7K
+ * Loops until a unique value is found (collision extremely unlikely).
+ */
+export const generateTrackingNumber = async (): Promise<string> => {
+  const dateStr = new Date()
+    .toISOString()
+    .slice(0, 10)
+    .replace(/-/g, ''); // YYYYMMDD
+
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const suffix = randomBytes(4)
+      .toString('base64url')
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '')
+      .slice(0, 6)
+      .padEnd(6, '0');
+
+    const trackingNumber = `CFY${dateStr}${suffix}`;
+
+    const existing = await prisma.shipment.findUnique({
+      where: { trackingNumber },
+      select: { id: true },
+    });
+
+    if (!existing) return trackingNumber;
+  }
+
+  // Extremely unlikely — fall back with timestamp nanoseconds
+  return `CFY${dateStr}${Date.now().toString(36).toUpperCase().slice(-6)}`;
+};
+
+// ─── Create shipment ──────────────────────────────────────────────────────────
+
+/** Full select returned to the client after creation — no sensitive fields */
+const shipmentFullSelect = {
+  id: true,
+  trackingNumber: true,
+  customerId: true,
+  serviceType: true,
+  status: true,
+  weightKg: true,
+  baseAmount: true,
+  codAmount: true,
+  insuranceAmount: true,
+  taxAmount: true,
+  totalAmount: true,
+  currency: true,
+  deliveryInstructions: true,
+  specialNotes: true,
+  createdAt: true,
+  updatedAt: true,
+  senderAddress: {
+    select: {
+      id: true, fullName: true, phone: true, street: true,
+      city: true, region: true, zip: true, country: true, label: true,
+      zone: { select: { id: true, name: true, code: true } },
+    },
+  },
+  recipientAddress: {
+    select: {
+      id: true, fullName: true, phone: true, street: true,
+      city: true, region: true, zip: true, country: true, label: true,
+      zone: { select: { id: true, name: true, code: true } },
+    },
+  },
+  parcel: {
+    select: {
+      id: true, weightKg: true, lengthCm: true, widthCm: true, heightCm: true,
+      category: true, description: true, declaredValue: true,
+      isFragile: true, insuranceEnabled: true, createdAt: true,
+    },
+  },
+  trackingEvents: {
+    select: {
+      id: true, eventType: true, location: true, notes: true,
+      actorId: true, actorRole: true, createdAt: true,
+    },
+    orderBy: { createdAt: 'asc' as const },
+  },
+  originZone: { select: { id: true, name: true, code: true } },
+  destinationZone: { select: { id: true, name: true, code: true } },
+} as const;
+
+export const createShipment = async (
+  customerId: string,
+  input: CreateShipmentInput,
+  requestId?: string,
+) => {
+  const { sender, recipient, parcel, serviceType, codAmount, deliveryInstructions, specialNotes } = input;
+
+  // ── 1. Re-calculate quote server-side (never trust client price) ───────────
+  const insuranceValue = parcel.insuranceEnabled ? parcel.declaredValue : 0;
+
+  const quote = await calculateQuote({
+    weightKg: parcel.weightKg,
+    lengthCm: parcel.lengthCm,
+    widthCm: parcel.widthCm,
+    heightCm: parcel.heightCm,
+    originZoneId: sender.zoneId,
+    destinationZoneId: recipient.zoneId,
+    serviceType,
+    codAmount: codAmount ?? 0,
+    insuranceValue,
+  });
+
+  // ── 2. Generate unique tracking number (outside transaction — needs DB read) ─
+  const trackingNumber = await generateTrackingNumber();
+
+  // ── 3. Single transaction: addresses + parcel + shipment + tracking + audit ─
+  const shipment = await prisma.$transaction(async (tx) => {
+    // Create sender address snapshot
+    const senderAddr = await tx.address.create({
+      data: {
+        fullName: sender.fullName,
+        phone: sender.phone,
+        street: sender.street,
+        city: sender.city,
+        region: sender.region,
+        zip: sender.zip ?? null,
+        country: sender.country,
+        zoneId: sender.zoneId,
+        label: sender.label ?? null,
+      },
+    });
+
+    // Create recipient address snapshot
+    const recipientAddr = await tx.address.create({
+      data: {
+        fullName: recipient.fullName,
+        phone: recipient.phone,
+        street: recipient.street,
+        city: recipient.city,
+        region: recipient.region,
+        zip: recipient.zip ?? null,
+        country: recipient.country,
+        zoneId: recipient.zoneId,
+        label: recipient.label ?? null,
+      },
+    });
+
+    // Create shipment with nested parcel + first tracking event
+    const created = await tx.shipment.create({
+      data: {
+        trackingNumber,
+        customerId,
+        senderAddressId: senderAddr.id,
+        recipientAddressId: recipientAddr.id,
+        originZoneId: sender.zoneId,
+        destinationZoneId: recipient.zoneId,
+        serviceType,
+        status: ShipmentStatus.DRAFT,
+        weightKg: parcel.weightKg,
+        baseAmount: quote.breakdown.base,
+        codAmount: codAmount ?? 0,
+        insuranceAmount: quote.breakdown.insurance,
+        taxAmount: quote.breakdown.tax,
+        totalAmount: quote.breakdown.total,
+        currency: 'bdt',
+        deliveryInstructions: deliveryInstructions ?? null,
+        specialNotes: specialNotes ?? null,
+        parcel: {
+          create: {
+            weightKg: parcel.weightKg,
+            lengthCm: parcel.lengthCm,
+            widthCm: parcel.widthCm,
+            heightCm: parcel.heightCm,
+            category: parcel.category ?? null,
+            description: parcel.description ?? null,
+            declaredValue: parcel.declaredValue,
+            isFragile: parcel.isFragile,
+            insuranceEnabled: parcel.insuranceEnabled,
+          },
+        },
+        trackingEvents: {
+          create: {
+            eventType: ShipmentStatus.DRAFT,
+            notes: 'Shipment created by customer',
+            actorId: customerId,
+            actorRole: Role.CUSTOMER,
+          },
+        },
+      },
+      select: shipmentFullSelect,
+    });
+
+    // AuditLog entry
+    await tx.auditLog.create({
+      data: {
+        actorId: customerId,
+        actorRole: Role.CUSTOMER,
+        action: 'SHIPMENT_CREATED',
+        entityType: 'Shipment',
+        entityId: created.id,
+        requestId: requestId ?? null,
+        newValues: {
+          trackingNumber,
+          serviceType,
+          totalAmount: quote.breakdown.total,
+          originZoneId: sender.zoneId,
+          destinationZoneId: recipient.zoneId,
+        },
+      },
+    });
+
+    return created;
+  });
+
+  return { shipment, quote };
 };

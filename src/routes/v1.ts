@@ -36,6 +36,7 @@ router.get('/', (_req: Request, res: Response) => {
         },
         shipments: {
           quote: 'POST /api/v1/shipments/quote',
+          create: 'POST /api/v1/shipments',
         },
       },
     }),

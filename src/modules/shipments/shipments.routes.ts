@@ -3,14 +3,12 @@ import { StatusCodes } from 'http-status-codes';
 import { successResponse } from '../../common/response';
 import { authenticate } from '../../common/middleware/authenticate';
 import { authorize } from '../../common/middleware/authorize';
-import { calculateQuote } from './shipments.service';
-import { quoteSchema } from './shipments.validation';
+import { calculateQuote, createShipment } from './shipments.service';
+import { createShipmentSchema, quoteSchema } from './shipments.validation';
 
 const router = Router();
 
 // ─── POST /shipments/quote ────────────────────────────────────────────────────
-// Only authenticated CUSTOMER role can request a quote.
-// The price is ALWAYS server-calculated — client cannot override.
 
 router.post(
   '/quote',
@@ -22,6 +20,22 @@ router.post(
 
     res.status(StatusCodes.OK).json(
       successResponse('Quote calculated successfully', quote),
+    );
+  },
+);
+
+// ─── POST /shipments ──────────────────────────────────────────────────────────
+
+router.post(
+  '/',
+  authenticate,
+  authorize('CUSTOMER'),
+  async (req: Request, res: Response) => {
+    const input = createShipmentSchema.parse(req.body);
+    const result = await createShipment(req.user!.id, input, req.id);
+
+    res.status(StatusCodes.CREATED).json(
+      successResponse('Shipment created successfully', result),
     );
   },
 );
