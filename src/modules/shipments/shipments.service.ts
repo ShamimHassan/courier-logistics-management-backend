@@ -1,8 +1,8 @@
 import { randomBytes } from 'node:crypto';
-import { Role, ShipmentStatus } from '../../../prisma/generated/client/enums';
+import { AssignmentStatus, PaymentStatus, Role, ShipmentStatus } from '../../../prisma/generated/client/enums';
 import { prisma } from '../../config/database';
-import { BadRequestError, NotFoundError } from '../../common/errors/AppError';
-import type { CreateShipmentInput, QuoteInput } from './shipments.validation';
+import { AppError, BadRequestError, ForbiddenError, NotFoundError, UnprocessableEntityError } from '../../common/errors/AppError';
+import type { CancelShipmentInput, CreateShipmentInput, ListShipmentsQuery, QuoteInput, SearchShipmentsQuery, UpdateShipmentInput } from './shipments.validation';
 
 // ─── Quote calculation ────────────────────────────────────────────────────────
 
@@ -396,8 +396,6 @@ const shipmentListSelect = {
   destinationZone: { select: { id: true, name: true, code: true } },
 } as const;
 
-import type { ListShipmentsQuery } from './shipments.validation';
-
 export const listShipments = async (
   query: ListShipmentsQuery,
   /** Pass userId when role is CUSTOMER to scope ownership; undefined for ADMIN */
@@ -458,5 +456,443 @@ export const listShipments = async (
       totalCount,
       totalPages,
     },
+  };
+};
+
+// ─── Shared: ownership check ──────────────────────────────────────────────────
+// Returns the shipment if the caller is authorised; throws 403/404 otherwise.
+
+const shipmentDetailSelect = {
+  id: true,
+  trackingNumber: true,
+  customerId: true,
+  serviceType: true,
+  status: true,
+  weightKg: true,
+  baseAmount: true,
+  codAmount: true,
+  insuranceAmount: true,
+  taxAmount: true,
+  totalAmount: true,
+  currency: true,
+  deliveryInstructions: true,
+  specialNotes: true,
+  deliveryAttempts: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+  originZoneId: true,
+  destinationZoneId: true,
+  senderAddressId: true,
+  recipientAddressId: true,
+  senderAddress: {
+    select: {
+      id: true, fullName: true, phone: true, street: true,
+      city: true, region: true, zip: true, country: true, label: true,
+      zone: { select: { id: true, name: true, code: true } },
+    },
+  },
+  recipientAddress: {
+    select: {
+      id: true, fullName: true, phone: true, street: true,
+      city: true, region: true, zip: true, country: true, label: true,
+      zone: { select: { id: true, name: true, code: true } },
+    },
+  },
+  parcel: {
+    select: {
+      id: true, weightKg: true, lengthCm: true, widthCm: true, heightCm: true,
+      category: true, description: true, declaredValue: true,
+      isFragile: true, insuranceEnabled: true, createdAt: true, updatedAt: true,
+    },
+  },
+  trackingEvents: {
+    select: {
+      id: true, eventType: true, location: true, notes: true, photoUrl: true,
+      actorId: true, actorRole: true, hubId: true, createdAt: true,
+    },
+    orderBy: { createdAt: 'desc' as const },
+    take: 20,
+  },
+  assignments: {
+    where: {
+      status: {
+        in: [
+          AssignmentStatus.OFFERED,
+          AssignmentStatus.ACCEPTED,
+          AssignmentStatus.IN_PROGRESS,
+        ] as AssignmentStatus[],
+      },
+      deletedAt: null,
+    },
+    select: {
+      id: true,
+      status: true,
+      acceptedAt: true,
+      earnings: true,
+      courier: {
+        select: {
+          id: true,
+          vehicleType: true,
+          averageRating: true,
+          user: { select: { id: true, name: true, phone: true } },
+        },
+      },
+    },
+    take: 1,
+  },
+  payment: {
+    select: {
+      id: true, status: true, amount: true, currency: true,
+      provider: true, paidAt: true, receiptUrl: true, createdAt: true,
+    },
+  },
+  deliveryAttemptLog: {
+    select: {
+      id: true, status: true, reason: true, attemptedAt: true,
+      recipientName: true, otpVerified: true, courierNotes: true,
+    },
+    orderBy: { attemptedAt: 'desc' as const },
+  },
+  originZone: { select: { id: true, name: true, code: true } },
+  destinationZone: { select: { id: true, name: true, code: true } },
+} as const;
+
+/**
+ * Verify the caller can access a shipment.
+ * CUSTOMER: must be the owner
+ * COURIER: must have an active assignment
+ * ADMIN: unrestricted
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const assertShipmentAccess = async (
+  shipmentId: string,
+  userId: string,
+  userRole: string,
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+): Promise<any> => {
+  const shipment = await prisma.shipment.findUnique({
+    where: { id: shipmentId, deletedAt: null },
+    select: shipmentDetailSelect,
+  });
+
+  if (!shipment) throw NotFoundError('Shipment not found');
+
+  if (userRole === 'ADMIN') return shipment;
+
+  if (userRole === 'CUSTOMER') {
+    if (shipment.customerId !== userId) {
+      throw new AppError('You do not have access to this shipment', 403, [
+        { code: 'FORBIDDEN', message: 'This shipment does not belong to your account' },
+      ]);
+    }
+    return shipment;
+  }
+
+  if (userRole === 'COURIER') {
+    const courierProfile = await prisma.courierProfile.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+    if (!courierProfile) throw ForbiddenError('Courier profile not found');
+
+    const assignment = await prisma.courierAssignment.findFirst({
+      where: {
+        shipmentId,
+        courierId: courierProfile.id,
+        status: {
+          in: [
+            AssignmentStatus.OFFERED,
+            AssignmentStatus.ACCEPTED,
+            AssignmentStatus.IN_PROGRESS,
+          ] as AssignmentStatus[],
+        },
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+
+    if (!assignment) {
+      throw new AppError('You do not have access to this shipment', 403, [
+        { code: 'FORBIDDEN', message: 'No active assignment found for your courier account' },
+      ]);
+    }
+    return shipment;
+  }
+
+  throw ForbiddenError('Insufficient permissions');
+};
+
+// ─── Step 16: Search shipments ────────────────────────────────────────────────
+
+export const searchShipments = async (
+  query: SearchShipmentsQuery,
+  userId: string,
+  userRole: string,
+) => {
+  const { q, page, limit } = query;
+  const skip = (page - 1) * limit;
+
+  const ownerFilter = userRole === 'CUSTOMER' ? { customerId: userId } : {};
+
+  const where = {
+    deletedAt: null,
+    ...ownerFilter,
+    OR: [
+      { trackingNumber: { contains: q, mode: 'insensitive' as const } },
+      { senderAddress:   { fullName: { contains: q, mode: 'insensitive' as const } } },
+      { recipientAddress: { phone: { contains: q, mode: 'insensitive' as const } } },
+      { recipientAddress: { street: { contains: q, mode: 'insensitive' as const } } },
+    ],
+  };
+
+  const [totalCount, shipments] = await Promise.all([
+    prisma.shipment.count({ where }),
+    prisma.shipment.findMany({
+      where,
+      select: shipmentListSelect,
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
+    }),
+  ]);
+
+  return {
+    shipments,
+    meta: { page, limit, totalCount, totalPages: Math.ceil(totalCount / limit) },
+  };
+};
+
+// ─── Step 16: Get shipment by ID ──────────────────────────────────────────────
+
+export const getShipmentById = async (
+  shipmentId: string,
+  userId: string,
+  userRole: string,
+) => {
+  return assertShipmentAccess(shipmentId, userId, userRole);
+};
+
+// ─── Step 17: Update shipment ─────────────────────────────────────────────────
+
+/** Statuses where the customer may still edit the shipment */
+const EDITABLE_STATUSES: ShipmentStatus[] = [
+  ShipmentStatus.DRAFT,
+  ShipmentStatus.PAYMENT_PENDING,
+];
+
+export const updateShipment = async (
+  shipmentId: string,
+  userId: string,
+  userRole: string,
+  payload: UpdateShipmentInput,
+  requestId?: string,
+) => {
+  const shipment = await assertShipmentAccess(shipmentId, userId, userRole);
+
+  if (!EDITABLE_STATUSES.includes(shipment.status as ShipmentStatus)) {
+    throw new AppError(
+      `Shipment cannot be edited in status "${shipment.status}"`,
+      409,
+      [{
+        code: 'NOT_EDITABLE',
+        message: `Only DRAFT or PAYMENT_PENDING shipments can be edited. Current status: ${shipment.status}`,
+      }],
+    );
+  }
+
+  // Only customers may edit their own shipments before payment
+  if (userRole !== 'ADMIN' && shipment.customerId !== userId) {
+    throw ForbiddenError('You can only edit your own shipments');
+  }
+
+  await prisma.$transaction(async (tx) => {
+    // Update shipment top-level fields
+    const shipmentData: Record<string, unknown> = {};
+    if (payload.deliveryInstructions !== undefined) shipmentData.deliveryInstructions = payload.deliveryInstructions;
+    if (payload.specialNotes         !== undefined) shipmentData.specialNotes         = payload.specialNotes;
+
+    if (Object.keys(shipmentData).length > 0) {
+      await tx.shipment.update({ where: { id: shipmentId }, data: shipmentData });
+    }
+
+    // Update parcel description
+    if (payload.parcelDescription !== undefined && shipment.parcel) {
+      await tx.parcel.update({
+        where: { shipmentId },
+        data: { description: payload.parcelDescription },
+      });
+    }
+
+    // Update recipient contact info
+    if (payload.recipientPhone !== undefined || payload.recipientName !== undefined) {
+      const addrData: Record<string, string> = {};
+      if (payload.recipientPhone) addrData.phone = payload.recipientPhone;
+      if (payload.recipientName)  addrData.fullName = payload.recipientName;
+      await tx.address.update({
+        where: { id: shipment.recipientAddressId },
+        data: addrData,
+      });
+    }
+
+    // AuditLog
+    await tx.auditLog.create({
+      data: {
+        actorId: userId,
+        actorRole: userRole as Role,
+        action: 'SHIPMENT_UPDATED',
+        entityType: 'Shipment',
+        entityId: shipmentId,
+        requestId: requestId ?? null,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        newValues: payload as any,
+      },
+    });
+  });
+
+  // Return fresh full detail
+  return prisma.shipment.findUnique({
+    where: { id: shipmentId },
+    select: shipmentDetailSelect,
+  });
+};
+
+// ─── Step 17: Cancel shipment ─────────────────────────────────────────────────
+
+/** Statuses where cancellation is NOT allowed */
+const NON_CANCELLABLE: ShipmentStatus[] = [
+  ShipmentStatus.DELIVERED,
+  ShipmentStatus.CANCELLED,
+  ShipmentStatus.RETURNED,
+];
+
+/** Statuses that qualify for full refund */
+const FULL_REFUND_STATUSES: ShipmentStatus[] = [
+  ShipmentStatus.DRAFT,
+  ShipmentStatus.PAYMENT_PENDING,
+  ShipmentStatus.PAYMENT_FAILED,
+];
+
+/** Statuses that qualify for partial (80%) refund */
+const PARTIAL_REFUND_STATUSES: ShipmentStatus[] = [
+  ShipmentStatus.CONFIRMED,
+  ShipmentStatus.ASSIGNMENT_PENDING,
+  ShipmentStatus.ASSIGNED,
+];
+
+export const cancelShipment = async (
+  shipmentId: string,
+  userId: string,
+  userRole: string,
+  payload: CancelShipmentInput,
+  requestId?: string,
+) => {
+  const shipment = await assertShipmentAccess(shipmentId, userId, userRole);
+
+  // DELIVERED → 422
+  if (shipment.status === ShipmentStatus.DELIVERED) {
+    throw UnprocessableEntityError('Delivered shipments cannot be cancelled', [
+      { code: 'ALREADY_DELIVERED', message: 'A delivered shipment cannot be cancelled. Raise a return request instead.' },
+    ]);
+  }
+
+  if (NON_CANCELLABLE.includes(shipment.status as ShipmentStatus)) {
+    throw new AppError(
+      `Shipment in status "${shipment.status}" cannot be cancelled`,
+      409,
+      [{ code: 'NOT_CANCELLABLE', message: `Cannot cancel a shipment with status: ${shipment.status}` }],
+    );
+  }
+
+  // PICKED_UP or later (but not already in NON_CANCELLABLE) → no refund
+  const noRefundStatuses: ShipmentStatus[] = [
+    ShipmentStatus.PICKED_UP,
+    ShipmentStatus.AT_ORIGIN_HUB,
+    ShipmentStatus.IN_TRANSIT,
+    ShipmentStatus.AT_DESTINATION_HUB,
+    ShipmentStatus.OUT_FOR_DELIVERY,
+    ShipmentStatus.DELIVERY_FAILED,
+    ShipmentStatus.RETURN_REQUESTED,
+  ];
+
+  const isFullRefund    = FULL_REFUND_STATUSES.includes(shipment.status as ShipmentStatus);
+  const isPartialRefund = PARTIAL_REFUND_STATUSES.includes(shipment.status as ShipmentStatus);
+  const isNoRefund      = noRefundStatuses.includes(shipment.status as ShipmentStatus);
+
+  // Determine refund amount
+  let refundAmount = 0;
+  let refundPolicy = 'NO_REFUND';
+  if (isFullRefund)    { refundAmount = shipment.totalAmount; refundPolicy = 'FULL_REFUND'; }
+  if (isPartialRefund) { refundAmount = Math.floor(shipment.totalAmount * 0.8); refundPolicy = 'PARTIAL_REFUND_80'; }
+  if (isNoRefund)      { refundAmount = 0; refundPolicy = 'NO_REFUND'; }
+
+  const now = new Date();
+
+  await prisma.$transaction(async (tx) => {
+    // Soft-delete + status transition
+    await tx.shipment.update({
+      where: { id: shipmentId },
+      data: {
+        status: ShipmentStatus.CANCELLED,
+        deletedAt: now,
+      },
+    });
+
+    // TrackingEvent
+    await tx.trackingEvent.create({
+      data: {
+        shipmentId,
+        eventType: ShipmentStatus.CANCELLED,
+        notes: `Cancelled: ${payload.reason}`,
+        actorId: userId,
+        actorRole: userRole as Role,
+      },
+    });
+
+    // Flag payment for refund if eligible
+    if (shipment.payment && (isFullRefund || isPartialRefund)) {
+      await tx.payment.update({
+        where: { id: shipment.payment.id },
+        data: {
+          status: PaymentStatus.REFUNDED,
+          refundedAmount: refundAmount,
+        },
+      });
+    }
+
+    // Revoke active courier assignments
+    await tx.courierAssignment.updateMany({
+      where: {
+        shipmentId,
+        status: {
+          in: [AssignmentStatus.OFFERED, AssignmentStatus.ACCEPTED],
+        },
+      },
+      data: { status: AssignmentStatus.CANCELLED },
+    });
+
+    // AuditLog
+    await tx.auditLog.create({
+      data: {
+        actorId: userId,
+        actorRole: userRole as Role,
+        action: 'SHIPMENT_CANCELLED',
+        entityType: 'Shipment',
+        entityId: shipmentId,
+        requestId: requestId ?? null,
+        oldValues: { status: shipment.status },
+        newValues: { status: 'CANCELLED', reason: payload.reason, refundPolicy, refundAmount },
+        reason: payload.reason,
+      },
+    });
+  });
+
+  return {
+    shipmentId,
+    trackingNumber: shipment.trackingNumber,
+    status: 'CANCELLED',
+    refundPolicy,
+    refundAmount,
+    reason: payload.reason,
   };
 };

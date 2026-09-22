@@ -195,3 +195,59 @@ export const listShipmentsSchema = z.object({
 });
 
 export type ListShipmentsQuery = z.infer<typeof listShipmentsSchema>;
+
+// ─── Search query ─────────────────────────────────────────────────────────────
+
+export const searchShipmentsSchema = z.object({
+  q: z.string().trim().min(2, 'Search query must be at least 2 characters').max(100),
+  page: z
+    .string()
+    .optional()
+    .transform((v) => {
+      const n = parseInt(v ?? '1', 10);
+      return isNaN(n) || n < 1 ? 1 : n;
+    }),
+  limit: z
+    .string()
+    .optional()
+    .transform((v) => {
+      const n = parseInt(v ?? '20', 10);
+      if (isNaN(n) || n < 1) return 20;
+      return Math.min(n, 100);
+    }),
+});
+
+export type SearchShipmentsQuery = z.infer<typeof searchShipmentsSchema>;
+
+// ─── Update shipment ──────────────────────────────────────────────────────────
+
+const bangladeshPhoneRegexUpdate = /^(?:\+8801|01)[3-9]\d{8}$/;
+const normalizePhoneUpdate = (v: string) => {
+  const t = v.trim();
+  return t.startsWith('01') ? `+880${t.slice(1)}` : t;
+};
+
+export const updateShipmentSchema = z.object({
+  deliveryInstructions: z.string().trim().max(500).optional().nullable(),
+  specialNotes: z.string().trim().max(500).optional().nullable(),
+  // Parcel description only — weight/dimensions changes require re-quote
+  parcelDescription: z.string().trim().max(500).optional().nullable(),
+  // Recipient contact update
+  recipientPhone: z
+    .string()
+    .trim()
+    .regex(bangladeshPhoneRegexUpdate, 'Phone must be a valid Bangladesh mobile number')
+    .transform(normalizePhoneUpdate)
+    .optional(),
+  recipientName: z.string().trim().min(2).max(100).optional(),
+}).strict();
+
+export type UpdateShipmentInput = z.infer<typeof updateShipmentSchema>;
+
+// ─── Cancel shipment ──────────────────────────────────────────────────────────
+
+export const cancelShipmentSchema = z.object({
+  reason: z.string().trim().min(3, 'Cancellation reason must be at least 3 characters').max(500),
+});
+
+export type CancelShipmentInput = z.infer<typeof cancelShipmentSchema>;
