@@ -9,6 +9,7 @@ import {
   registerSchema,
 } from './auth.validation';
 import { assertGoogleConfigured, buildGoogleAuthUrl, exchangeCodeForProfile } from './auth.google';
+import { authenticateOptional } from '../../common/middleware/authenticate';
 
 const router = Router();
 
@@ -68,13 +69,16 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
 });
 
 // ─── Logout ───────────────────────────────────────────────────────────────────
+// authenticate is optional here — if a valid token is present we scope the
+// revocation to that user (faster). If not (e.g. expired access token), we
+// still find and revoke the refresh token globally via the hash search.
 
-router.post('/logout', async (req: Request, res: Response) => {
+router.post('/logout', authenticateOptional, async (req: Request, res: Response) => {
   const { refreshToken } = logoutSchema.parse(req.body);
 
-  // Full authenticate middleware arrives in Step 10.
-  // Until then, logoutUser searches globally by token hash (safe, idempotent).
-  await logoutUser(refreshToken);
+  // req.user is set by authenticate when access token is valid;
+  // logoutUser scopes search to that userId for efficiency.
+  await logoutUser(refreshToken, req.user?.id);
 
   res.status(StatusCodes.OK).json(
     successResponse('Logged out successfully', null),
