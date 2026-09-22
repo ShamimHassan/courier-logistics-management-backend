@@ -15,6 +15,8 @@ router.get('/', (_req: Request, res: Response) => {
         auth: {
           register: '/api/v1/auth/register',
           login: '/api/v1/auth/login',
+          refreshToken: '/api/v1/auth/refresh-token',
+          logout: '/api/v1/auth/logout',
         },
       },
     }),
