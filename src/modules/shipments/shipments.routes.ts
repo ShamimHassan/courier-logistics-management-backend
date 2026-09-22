@@ -8,6 +8,7 @@ import {
   cancelShipment,
   createShipment,
   getShipmentById,
+  getShipmentTracking,
   listShipments,
   searchShipments,
   updateShipment,
@@ -87,6 +88,26 @@ router.post(
     const input = createShipmentSchema.parse(req.body);
     const result = await createShipment(req.user!.id, input, req.id);
     res.status(StatusCodes.CREATED).json(successResponse('Shipment created successfully', result));
+  },
+);
+
+// ─── GET /shipments/:id/tracking — Step 18 ───────────────────────────────────
+// Must be registered BEFORE /:id to avoid Express matching /:id first
+
+router.get(
+  '/:id/tracking',
+  authenticate,
+  authorize('CUSTOMER', 'COURIER', 'ADMIN'),
+  async (req: Request, res: Response) => {
+    const events = await getShipmentTracking(
+      String(req.params.id),
+      req.user!.id,
+      req.user!.role,
+    );
+
+    res.status(StatusCodes.OK).json(
+      successResponse('Tracking timeline retrieved successfully', { events }),
+    );
   },
 );
 

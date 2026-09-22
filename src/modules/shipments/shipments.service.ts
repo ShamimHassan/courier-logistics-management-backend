@@ -896,3 +896,55 @@ export const cancelShipment = async (
     reason: payload.reason,
   };
 };
+
+// ─── Step 18: Tracking timeline ───────────────────────────────────────────────
+
+/**
+ * Return a human-readable relative time string from a Date.
+ * Examples: "just now", "3 minutes ago", "2 hours ago", "4 days ago"
+ */
+const humanReadableTime = (date: Date): string => {
+  const diffMs = Date.now() - date.getTime();
+  const diffSec = Math.floor(diffMs / 1_000);
+  if (diffSec < 60)  return 'just now';
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60)  return `${diffMin} minute${diffMin === 1 ? '' : 's'} ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24)   return `${diffHr} hour${diffHr === 1 ? '' : 's'} ago`;
+  const diffDay = Math.floor(diffHr / 24);
+  if (diffDay < 30)  return `${diffDay} day${diffDay === 1 ? '' : 's'} ago`;
+  const diffMo = Math.floor(diffDay / 30);
+  if (diffMo < 12)   return `${diffMo} month${diffMo === 1 ? '' : 's'} ago`;
+  const diffYr = Math.floor(diffMo / 12);
+  return `${diffYr} year${diffYr === 1 ? '' : 's'} ago`;
+};
+
+export const getShipmentTracking = async (
+  shipmentId: string,
+  userId: string,
+  userRole: string,
+) => {
+  // Reuse ownership check — throws 403/404 if not authorised
+  await assertShipmentAccess(shipmentId, userId, userRole);
+
+  const events = await prisma.trackingEvent.findMany({
+    where: { shipmentId },
+    select: {
+      id: true,
+      eventType: true,
+      location: true,
+      notes: true,
+      actorId: true,
+      actorRole: true,
+      photoUrl: true,
+      hubId: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: 'asc' }, // chronological — oldest first
+  });
+
+  return events.map((e) => ({
+    ...e,
+    humanReadableTime: humanReadableTime(e.createdAt),
+  }));
+};
