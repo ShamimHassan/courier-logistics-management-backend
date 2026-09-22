@@ -2,11 +2,15 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
-import { StatusCodes } from 'http-status-codes';
-import { env, getCorsOrigins } from './config/env';
+import { getCorsOrigins } from './config/env';
+import { requestIdMiddleware } from './common/middleware/requestId';
+import { notFoundHandler } from './common/middleware/notFound';
+import { errorHandler } from './common/middleware/errorHandler';
 import v1Routes from './routes/v1';
 
 const app = express();
+
+app.set('trust proxy', 1);
 
 app.use(helmet());
 
@@ -30,33 +34,12 @@ app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-app.use((req, _res, next) => {
-  const requestId = `req_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-  req.id = requestId;
-  next();
-});
+app.use(requestIdMiddleware);
 
 app.use('/api/v1', v1Routes);
 
-app.get('/api/v1/health', (_req, res) => {
-  res.status(StatusCodes.OK).json({
-    success: true,
-    message: 'Server is running',
-    data: {
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      environment: env.NODE_ENV,
-    },
-  });
-});
+app.use(notFoundHandler);
 
-app.use((_req, res) => {
-  res.status(StatusCodes.NOT_FOUND).json({
-    success: false,
-    message: 'Route not found',
-    errors: [],
-  });
-});
+app.use(errorHandler);
 
 export default app;

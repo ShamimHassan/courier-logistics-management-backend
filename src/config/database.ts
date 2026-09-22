@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../prisma/generated/client/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 import { env, isDevelopment } from './env';
@@ -41,5 +41,3 @@ export const testDatabaseConnection = async (): Promise<void> => {
 export const disconnectDatabase = async (): Promise<void> => {
   await prisma.$disconnect();
 };
-
-export { env };

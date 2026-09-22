@@ -1,18 +1,30 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
+import { StatusCodes } from 'http-status-codes';
+import { successResponse } from '../common/response';
+import { env } from '../config/env';
 
 const router = Router();
 
-router.get('/', (_req, res) => {
-  res.json({
-    success: true,
-    message: 'CourierFlow API v1',
-    data: {
+router.get('/', (_req: Request, res: Response) => {
+  res.status(StatusCodes.OK).json(
+    successResponse('CourierFlow API v1', {
       version: '1.0.0',
       endpoints: {
         health: '/api/v1/health',
       },
-    },
-  });
+    }),
+  );
+});
+
+router.get('/health', (_req: Request, res: Response) => {
+  res.status(StatusCodes.OK).json(
+    successResponse('Service is healthy', {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: env.NODE_ENV,
+    }),
+  );
 });
 
 export default router;
