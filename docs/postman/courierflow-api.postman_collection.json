@@ -1,0 +1,477 @@
+{
+  "info": {
+    "_postman_id": "courierflow-api-v1",
+    "name": "🚚 CourierFlow API",
+    "description": "Complete API collection for CourierFlow — Courier & Logistics Management Platform.\n\n**Base URL:** `{{baseUrl}}`\n\n## Setup\n1. Import this collection\n2. Create an environment with variable `baseUrl = http://localhost:5000/api/v1` (or your live API URL)\n3. Run the Auth → Login requests — `customerToken`, `courierToken`, `adminToken` are auto-extracted\n\n## Demo Credentials\n- Admin: `admin@courierflow.com` / `CourierFlow@2026`\n- Courier: `rafiq.courier@courierflow.com` / `CourierFlow@2026`\n- Customer: `karim.customer@gmail.com` / `CourierFlow@2026`",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000/api/v1" },
+    { "key": "customerToken", "value": "" },
+    { "key": "courierToken", "value": "" },
+    { "key": "adminToken", "value": "" },
+    { "key": "shipmentId", "value": "" },
+    { "key": "paymentId", "value": "" },
+    { "key": "assignmentId", "value": "" },
+    { "key": "trackingNumber", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "🏥 Health & Public",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": { "method": "GET", "url": "{{baseUrl}}/health" }
+        },
+        {
+          "name": "API Index (all endpoints)",
+          "request": { "method": "GET", "url": "{{baseUrl}}" }
+        }
+      ]
+    },
+    {
+      "name": "👤 Customer Auth & Profile",
+      "item": [
+        {
+          "name": "Register (Customer)",
+          "event": [{ "listen": "test", "script": { "exec": ["const r = pm.response.json(); if(r.data?.accessToken) pm.environment.set('customerToken', r.data.accessToken);"] } }],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/register",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Test Customer\",\n  \"email\": \"testcustomer@example.com\",\n  \"phone\": \"01712345678\",\n  \"password\": \"Secure@123\"\n}" }
+          }
+        },
+        {
+          "name": "Login (Admin)",
+          "event": [{ "listen": "test", "script": { "exec": ["const r = pm.response.json(); if(r.data?.accessToken) pm.environment.set('adminToken', r.data.accessToken);"] } }],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@courierflow.com\",\n  \"password\": \"CourierFlow@2026\"\n}" }
+          }
+        },
+        {
+          "name": "Login (Courier)",
+          "event": [{ "listen": "test", "script": { "exec": ["const r = pm.response.json(); if(r.data?.accessToken) pm.environment.set('courierToken', r.data.accessToken);"] } }],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"rafiq.courier@courierflow.com\",\n  \"password\": \"CourierFlow@2026\"\n}" }
+          }
+        },
+        {
+          "name": "Login (Customer)",
+          "event": [{ "listen": "test", "script": { "exec": ["const r = pm.response.json(); if(r.data?.accessToken) pm.environment.set('customerToken', r.data.accessToken);"] } }],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"karim.customer@gmail.com\",\n  \"password\": \"CourierFlow@2026\"\n}" }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/refresh-token",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/logout",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" }
+          }
+        },
+        {
+          "name": "Get My Profile",
+          "request": { "method": "GET", "url": "{{baseUrl}}/users/me", "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }] }
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/users/me",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated Name\"\n}" }
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/users/me/password",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"currentPassword\": \"Secure@123\",\n  \"newPassword\": \"NewSecure@456\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📦 Customer Shipment Lifecycle",
+      "item": [
+        {
+          "name": "Get Quote",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/shipments/quote",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"weightKg\": 1.5,\n  \"lengthCm\": 30,\n  \"widthCm\": 20,\n  \"heightCm\": 10,\n  \"originZoneId\": \"{{dacZoneId}}\",\n  \"destinationZoneId\": \"{{ctgZoneId}}\",\n  \"serviceType\": \"STANDARD\",\n  \"codAmount\": 0\n}" }
+          }
+        },
+        {
+          "name": "Create Shipment",
+          "event": [{ "listen": "test", "script": { "exec": ["const r = pm.response.json(); if(r.data?.shipment?.id) { pm.environment.set('shipmentId', r.data.shipment.id); pm.environment.set('trackingNumber', r.data.shipment.trackingNumber); }"] } }],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/shipments",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"sender\": {\n    \"fullName\": \"Karim Hossain\",\n    \"phone\": \"01711111222\",\n    \"street\": \"House 42, Road 11, Banani\",\n    \"city\": \"Dhaka\",\n    \"region\": \"Dhaka\",\n    \"zip\": \"1213\",\n    \"zoneId\": \"{{dacZoneId}}\"\n  },\n  \"recipient\": {\n    \"fullName\": \"Nusrat Jahan\",\n    \"phone\": \"01511666777\",\n    \"street\": \"Flat 6B, Rahim Mansion, WASA Circle\",\n    \"city\": \"Chattogram\",\n    \"region\": \"Chattogram\",\n    \"zip\": \"4203\",\n    \"zoneId\": \"{{ctgZoneId}}\"\n  },\n  \"parcel\": {\n    \"weightKg\": 1.5,\n    \"lengthCm\": 30,\n    \"widthCm\": 20,\n    \"heightCm\": 10,\n    \"category\": \"BOOKS\",\n    \"description\": \"Textbooks\",\n    \"declaredValue\": 2000,\n    \"isFragile\": false,\n    \"insuranceEnabled\": false\n  },\n  \"serviceType\": \"STANDARD\",\n  \"codAmount\": 0\n}" }
+          }
+        },
+        {
+          "name": "List My Shipments",
+          "request": { "method": "GET", "url": "{{baseUrl}}/shipments?page=1&limit=10", "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }] }
+        },
+        {
+          "name": "Get Shipment Detail",
+          "request": { "method": "GET", "url": "{{baseUrl}}/shipments/{{shipmentId}}", "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }] }
+        },
+        {
+          "name": "Search Shipments",
+          "request": { "method": "GET", "url": "{{baseUrl}}/shipments/search?q=CFY", "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }] }
+        },
+        {
+          "name": "Get Tracking Timeline",
+          "request": { "method": "GET", "url": "{{baseUrl}}/shipments/{{shipmentId}}/tracking", "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }] }
+        },
+        {
+          "name": "Update Shipment (before payment)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/shipments/{{shipmentId}}",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"deliveryInstructions\": \"Ring doorbell twice\"\n}" }
+          }
+        },
+        {
+          "name": "Cancel Shipment",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/shipments/{{shipmentId}}/cancel",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Changed my mind\"\n}" }
+          }
+        },
+        {
+          "name": "Rate Delivered Shipment",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/shipments/{{shipmentId}}/rating",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"stars\": 5,\n  \"comment\": \"Excellent service!\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "💳 SSLCommerz Payment Flow",
+      "item": [
+        {
+          "name": "Initiate Checkout",
+          "event": [{ "listen": "test", "script": { "exec": ["const r = pm.response.json(); if(r.data?.paymentId) pm.environment.set('paymentId', r.data.paymentId); if(r.data?.gatewayUrl) console.log('Gateway URL:', r.data.gatewayUrl);"] } }],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/payments/shipments/{{shipmentId}}/checkout",
+            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }]
+          }
+        },
+        {
+          "name": "Simulate IPN (server-to-server)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/payments/sslcommerz/ipn",
+            "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "tran_id", "value": "{{trackingNumber}}" },
+              { "key": "val_id", "value": "SANDBOX_VAL_ID_123456" },
+              { "key": "status", "value": "VALID" },
+              { "key": "amount", "value": "189" },
+              { "key": "currency", "value": "BDT" }
+            ]}
+          }
+        },
+        {
+          "name": "Get Payment Status",
+          "request": { "method": "GET", "url": "{{baseUrl}}/payments/{{paymentId}}", "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }] }
+        },
+        {
+          "name": "Get Payment by Shipment",
+          "request": { "method": "GET", "url": "{{baseUrl}}/payments/shipments/{{shipmentId}}", "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }] }
+        },
+        {
+          "name": "Admin Issue Refund",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/payments/{{paymentId}}/refund",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Customer requested cancellation\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔑 Admin Operations",
+      "item": [
+        {
+          "name": "Dashboard Stats",
+          "request": { "method": "GET", "url": "{{baseUrl}}/admin/dashboard-stats", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }] }
+        },
+        {
+          "name": "List Users",
+          "request": { "method": "GET", "url": "{{baseUrl}}/admin/users?page=1&limit=20", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }] }
+        },
+        {
+          "name": "Search Users by Name",
+          "request": { "method": "GET", "url": "{{baseUrl}}/admin/users?search=Karim&role=CUSTOMER", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }] }
+        },
+        {
+          "name": "Suspend User",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/admin/users/{{targetUserId}}/status",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"SUSPENDED\",\n  \"reason\": \"Policy violation\"\n}" }
+          }
+        },
+        {
+          "name": "Assign Courier to Shipment",
+          "event": [{ "listen": "test", "script": { "exec": ["const r = pm.response.json(); if(r.data?.assignmentId) pm.environment.set('assignmentId', r.data.assignmentId);"] } }],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/admin/shipments/{{shipmentId}}/assign",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"courierId\": \"{{rafiqUserId}}\"\n}" }
+          }
+        },
+        {
+          "name": "List Unassigned Shipments",
+          "request": { "method": "GET", "url": "{{baseUrl}}/admin/assignments/unassigned", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }] }
+        },
+        {
+          "name": "Create Pricing Rule",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/admin/pricing-rules",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"originZoneId\": \"{{dacZoneId}}\",\n  \"destinationZoneId\": \"{{ctgZoneId}}\",\n  \"serviceType\": \"STANDARD\",\n  \"minWeightKg\": 0,\n  \"maxWeightKg\": 2,\n  \"basePrice\": 200,\n  \"taxRatePercent\": 5\n}" }
+          }
+        },
+        {
+          "name": "Get Audit Logs",
+          "request": { "method": "GET", "url": "{{baseUrl}}/admin/audit-logs?limit=20", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }] }
+        },
+        {
+          "name": "List Hubs",
+          "request": { "method": "GET", "url": "{{baseUrl}}/hubs", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }] }
+        },
+        {
+          "name": "Create Hub",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/hubs",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"New Hub Chittagong\",\n  \"code\": \"HUB-CTG-NEW\",\n  \"address\": \"123 Port Road\",\n  \"city\": \"Chattogram\",\n  \"region\": \"Chattogram\",\n  \"zip\": \"4100\",\n  \"isActive\": true\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🚚 Courier Operations",
+      "item": [
+        {
+          "name": "Get Courier Profile",
+          "request": { "method": "GET", "url": "{{baseUrl}}/couriers/me", "header": [{ "key": "Authorization", "value": "Bearer {{courierToken}}" }] }
+        },
+        {
+          "name": "Set Availability (available)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/couriers/me/availability",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{courierToken}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"available\": true\n}" }
+          }
+        },
+        {
+          "name": "Accept Assignment",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/assignments/{{assignmentId}}/accept",
+            "header": [{ "key": "Authorization", "value": "Bearer {{courierToken}}" }]
+          }
+        },
+        {
+          "name": "Reject Assignment",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/assignments/{{assignmentId}}/reject",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{courierToken}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"VEHICLE_ISSUE\",\n  \"notes\": \"Flat tyre\"\n}" }
+          }
+        },
+        {
+          "name": "Pickup Shipment",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/shipments/{{shipmentId}}/pickup",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{courierToken}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"condition\": \"GOOD\",\n  \"notes\": \"Package intact\"\n}" }
+          }
+        },
+        {
+          "name": "Update Status — AT_ORIGIN_HUB",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/shipments/{{shipmentId}}/status",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{courierToken}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"AT_ORIGIN_HUB\",\n  \"hubId\": \"{{originHubId}}\",\n  \"location\": \"Kamalapur Hub\"\n}" }
+          }
+        },
+        {
+          "name": "Update Status — IN_TRANSIT",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/shipments/{{shipmentId}}/status",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{courierToken}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"IN_TRANSIT\",\n  \"notes\": \"Departed Dhaka\"\n}" }
+          }
+        },
+        {
+          "name": "Update Status — AT_DESTINATION_HUB",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/shipments/{{shipmentId}}/status",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{courierToken}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"AT_DESTINATION_HUB\",\n  \"hubId\": \"{{destHubId}}\",\n  \"location\": \"Sylhet Hub\"\n}" }
+          }
+        },
+        {
+          "name": "Update Status — OUT_FOR_DELIVERY",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/shipments/{{shipmentId}}/status",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{courierToken}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"OUT_FOR_DELIVERY\"\n}" }
+          }
+        },
+        {
+          "name": "Record Successful Delivery",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/shipments/{{shipmentId}}/delivery-attempts",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{courierToken}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"outcome\": \"DELIVERED\",\n  \"recipientName\": \"Nusrat Jahan\",\n  \"photoProofUrl\": \"https://example.com/proof.jpg\",\n  \"otpVerified\": true\n}" }
+          }
+        },
+        {
+          "name": "Record Failed Delivery",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/shipments/{{shipmentId}}/delivery-attempts",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{courierToken}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"outcome\": \"FAILED\",\n  \"reason\": \"RECIPIENT_UNAVAILABLE\",\n  \"notes\": \"No one answered the door\"\n}" }
+          }
+        },
+        {
+          "name": "Get Courier Earnings",
+          "request": { "method": "GET", "url": "{{baseUrl}}/couriers/me/earnings?page=1&limit=20", "header": [{ "key": "Authorization", "value": "Bearer {{courierToken}}" }] }
+        }
+      ]
+    },
+    {
+      "name": "🔔 Notifications",
+      "item": [
+        {
+          "name": "List Notifications (unread)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/notifications?read=false", "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }] }
+        },
+        {
+          "name": "Mark Notification Read",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/notifications/{{notificationId}}/read",
+            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "❌ Negative Tests",
+      "item": [
+        {
+          "name": "401 — No Token",
+          "request": { "method": "GET", "url": "{{baseUrl}}/shipments" }
+        },
+        {
+          "name": "403 — Courier hits Admin Route",
+          "request": { "method": "GET", "url": "{{baseUrl}}/admin/dashboard-stats", "header": [{ "key": "Authorization", "value": "Bearer {{courierToken}}" }] }
+        },
+        {
+          "name": "403 — Customer hits Courier Route",
+          "request": { "method": "GET", "url": "{{baseUrl}}/couriers/me", "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }] }
+        },
+        {
+          "name": "400 — Invalid Email (Zod)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"not-an-email\",\n  \"password\": \"test\"\n}" }
+          }
+        },
+        {
+          "name": "400 — Weak Password (Zod)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/register",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Test\",\n  \"email\": \"test@test.com\",\n  \"phone\": \"01712345678\",\n  \"password\": \"weak\"\n}" }
+          }
+        },
+        {
+          "name": "404 — Shipment Not Found",
+          "request": { "method": "GET", "url": "{{baseUrl}}/shipments/nonexistentid99", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }] }
+        },
+        {
+          "name": "409 — Duplicate Email Registration",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/register",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Admin Again\",\n  \"email\": \"admin@courierflow.com\",\n  \"phone\": \"01712345678\",\n  \"password\": \"Secure@123\"\n}" }
+          }
+        },
+        {
+          "name": "409 — Double-Assign Same Shipment",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/admin/shipments/{{shipmentId}}/assign",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"courierId\": \"{{rafiqUserId}}\"\n}" }
+          }
+        },
+        {
+          "name": "401 — Expired Access Token",
+          "request": { "method": "GET", "url": "{{baseUrl}}/users/me", "header": [{ "key": "Authorization", "value": "Bearer EXPIRED.TOKEN.HERE" }] }
+        }
+      ]
+    }
+  ]
+}

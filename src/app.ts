@@ -40,6 +40,11 @@ app.use(requestIdMiddleware);
 // Global rate limiting (100 req/min per IP, skips SSLCommerz callbacks)
 app.use(globalLimiter);
 
+// ─── Root welcome — redirect bare domain to /api/v1 ──────────────────────────
+// Must use app.get with explicit path before app.use('/api/v1', ...)
+app.get('/', (_req, res) => { res.redirect(302, '/api/v1'); });
+app.head('/', (_req, res) => { res.redirect(302, '/api/v1'); });
+
 app.use('/api/v1', v1Routes);
 
 app.use(notFoundHandler);

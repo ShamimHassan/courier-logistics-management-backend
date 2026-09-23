@@ -1,22 +1,35 @@
-node_modules
-dist
-build
-coverage
+# ─── Dependencies ────────────────────────────────────────────────────────────
+node_modules/
 
+# ─── Build output ─────────────────────────────────────────────────────────────
+dist/
+build/
+coverage/
+
+# ─── Environment secrets ─────────────────────────────────────────────────────
 .env
-*.md
+# .env.example is intentionally committed (no real secrets)
 
+# ─── Logs ────────────────────────────────────────────────────────────────────
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# ─── OS / Editor ─────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
-.vscode
-.idea
+.vscode/
+.idea/
 
+# ─── Certificates / Keys ─────────────────────────────────────────────────────
 *.pem
 *.key
 *.crt
+
+# ─── Ad-hoc test scripts (Step test files cleaned up per step) ───────────────
+scripts/_*.ts
+scripts/_*.ps1
+
+.vercel
