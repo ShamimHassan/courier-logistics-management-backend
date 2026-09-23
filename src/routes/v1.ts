@@ -44,6 +44,8 @@ router.get('/', (_req: Request, res: Response) => {
           create: 'POST /api/v1/shipments',
           detail: 'GET /api/v1/shipments/:id',
           tracking: 'GET /api/v1/shipments/:id/tracking',
+          pickup: 'POST /api/v1/shipments/:id/pickup',
+          status: 'PATCH /api/v1/shipments/:id/status',
           update: 'PATCH /api/v1/shipments/:id',
           cancel: 'POST /api/v1/shipments/:id/cancel',
         },

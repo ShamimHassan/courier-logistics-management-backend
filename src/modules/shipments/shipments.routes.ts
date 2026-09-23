@@ -10,15 +10,19 @@ import {
   getShipmentById,
   getShipmentTracking,
   listShipments,
+  pickupShipment,
   searchShipments,
+  transitionShipmentStatus,
   updateShipment,
 } from './shipments.service';
 import {
   cancelShipmentSchema,
   createShipmentSchema,
   listShipmentsSchema,
+  pickupSchema,
   quoteSchema,
   searchShipmentsSchema,
+  statusTransitionSchema,
   updateShipmentSchema,
 } from './shipments.validation';
 
@@ -120,6 +124,40 @@ router.get(
   async (req: Request, res: Response) => {
     const shipment = await getShipmentById(String(req.params.id), req.user!.id, req.user!.role);
     res.status(StatusCodes.OK).json(successResponse('Shipment retrieved successfully', { shipment }));
+  },
+);
+
+// ─── POST /shipments/:id/pickup — Step 21 ────────────────────────────────────
+// Must be before PATCH /:id to avoid collision
+
+router.post(
+  '/:id/pickup',
+  authenticate,
+  authorize('COURIER'),
+  async (req: Request, res: Response) => {
+    const payload = pickupSchema.parse(req.body);
+    const result = await pickupShipment(String(req.params.id), req.user!.id, payload, req.id);
+    res.status(StatusCodes.OK).json(successResponse('Shipment picked up successfully', result));
+  },
+);
+
+// ─── PATCH /shipments/:id/status — Step 21 ───────────────────────────────────
+// Must be before PATCH /:id to avoid collision
+
+router.patch(
+  '/:id/status',
+  authenticate,
+  authorize('COURIER', 'ADMIN'),
+  async (req: Request, res: Response) => {
+    const payload = statusTransitionSchema.parse(req.body);
+    const result = await transitionShipmentStatus(
+      String(req.params.id),
+      req.user!.id,
+      req.user!.role,
+      payload,
+      req.id,
+    );
+    res.status(StatusCodes.OK).json(successResponse('Shipment status updated successfully', result));
   },
 );
 

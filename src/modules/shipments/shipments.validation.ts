@@ -251,3 +251,39 @@ export const cancelShipmentSchema = z.object({
 });
 
 export type CancelShipmentInput = z.infer<typeof cancelShipmentSchema>;
+
+// ─── Pickup ───────────────────────────────────────────────────────────────────
+
+export const PICKUP_CONDITIONS = ['GOOD', 'DAMAGED', 'PACKAGING_WORN'] as const;
+export type PickupCondition = (typeof PICKUP_CONDITIONS)[number];
+
+export const pickupSchema = z.object({
+  condition: z.enum(PICKUP_CONDITIONS, {
+    error: `condition must be one of: ${PICKUP_CONDITIONS.join(', ')}`,
+  }),
+  notes: z.string().trim().max(500).optional(),
+  photoUrl: z.string().trim().url('photoUrl must be a valid URL').optional(),
+});
+
+export type PickupInput = z.infer<typeof pickupSchema>;
+
+// ─── Status transition ────────────────────────────────────────────────────────
+
+export const statusTransitionSchema = z.object({
+  status: z.enum(
+    [
+      ShipmentStatus.AT_ORIGIN_HUB,
+      ShipmentStatus.IN_TRANSIT,
+      ShipmentStatus.AT_DESTINATION_HUB,
+      ShipmentStatus.OUT_FOR_DELIVERY,
+    ] as [ShipmentStatus, ...ShipmentStatus[]],
+    { error: 'status must be a valid transition target' },
+  ),
+  hubId: z.string().cuid().optional(),
+  location: z.string().trim().max(200).optional(),
+  notes: z.string().trim().max(500).optional(),
+  // Admin override fields
+  adminReason: z.string().trim().min(3).max(500).optional(),
+});
+
+export type StatusTransitionInput = z.infer<typeof statusTransitionSchema>;

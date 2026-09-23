@@ -948,3 +948,236 @@ export const getShipmentTracking = async (
     humanReadableTime: humanReadableTime(e.createdAt),
   }));
 };
+
+// ─── Step 21: Pickup ──────────────────────────────────────────────────────────
+
+import type { PickupInput, StatusTransitionInput } from './shipments.validation';
+
+export const pickupShipment = async (
+  shipmentId: string,
+  userId: string,
+  payload: PickupInput,
+  requestId?: string,
+) => {
+  // Resolve courier profile
+  const courierProfile = await prisma.courierProfile.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+  if (!courierProfile) throw ForbiddenError('No courier profile found for your account');
+
+  // Fetch shipment
+  const shipment = await prisma.shipment.findUnique({
+    where: { id: shipmentId, deletedAt: null },
+    select: { id: true, status: true, trackingNumber: true, customerId: true },
+  });
+  if (!shipment) throw NotFoundError('Shipment not found');
+
+  if (shipment.status !== ShipmentStatus.ASSIGNED) {
+    throw new AppError(
+      `Shipment cannot be picked up in status "${shipment.status}"`,
+      409,
+      [{ code: 'INVALID_STATUS', message: `Shipment must be ASSIGNED to pick up. Current: ${shipment.status}` }],
+    );
+  }
+
+  // Verify courier has an ACCEPTED assignment for this shipment
+  const assignment = await prisma.courierAssignment.findFirst({
+    where: {
+      shipmentId,
+      courierId: courierProfile.id,
+      status: AssignmentStatus.ACCEPTED,
+      deletedAt: null,
+    },
+    select: { id: true },
+  });
+
+  if (!assignment) {
+    throw new AppError('You do not have an accepted assignment for this shipment', 403, [
+      { code: 'NO_ACCEPTED_ASSIGNMENT', message: 'Pickup requires an ACCEPTED assignment for this shipment' },
+    ]);
+  }
+
+  await prisma.$transaction(async (tx) => {
+    // Shipment → PICKED_UP
+    await tx.shipment.update({
+      where: { id: shipmentId },
+      data: { status: ShipmentStatus.PICKED_UP },
+    });
+
+    // Assignment → IN_PROGRESS
+    await tx.courierAssignment.update({
+      where: { id: assignment.id },
+      data: { status: AssignmentStatus.IN_PROGRESS },
+    });
+
+    // TrackingEvent
+    await tx.trackingEvent.create({
+      data: {
+        shipmentId,
+        eventType: ShipmentStatus.PICKED_UP,
+        notes: `Parcel picked up. Condition: ${payload.condition}${payload.notes ? ` — ${payload.notes}` : ''}`,
+        photoUrl: payload.photoUrl ?? null,
+        actorId: userId,
+        actorRole: Role.COURIER,
+      },
+    });
+
+    // AuditLog
+    await tx.auditLog.create({
+      data: {
+        actorId: userId,
+        actorRole: Role.COURIER,
+        action: 'SHIPMENT_PICKED_UP',
+        entityType: 'Shipment',
+        entityId: shipmentId,
+        requestId: requestId ?? null,
+        newValues: { status: ShipmentStatus.PICKED_UP, condition: payload.condition } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+      },
+    });
+  });
+
+  return {
+    shipmentId,
+    trackingNumber: shipment.trackingNumber,
+    status: ShipmentStatus.PICKED_UP,
+    condition: payload.condition,
+  };
+};
+
+// ─── Step 21: Status transition state machine ─────────────────────────────────
+
+/**
+ * Valid courier-driven transitions:
+ *   PICKED_UP          → AT_ORIGIN_HUB        (hubId required)
+ *   AT_ORIGIN_HUB      → IN_TRANSIT
+ *   IN_TRANSIT         → AT_DESTINATION_HUB   (hubId required)
+ *   AT_DESTINATION_HUB → OUT_FOR_DELIVERY
+ */
+const COURIER_TRANSITIONS: Partial<Record<ShipmentStatus, ShipmentStatus>> = {
+  [ShipmentStatus.PICKED_UP]:          ShipmentStatus.AT_ORIGIN_HUB,
+  [ShipmentStatus.AT_ORIGIN_HUB]:      ShipmentStatus.IN_TRANSIT,
+  [ShipmentStatus.IN_TRANSIT]:         ShipmentStatus.AT_DESTINATION_HUB,
+  [ShipmentStatus.AT_DESTINATION_HUB]: ShipmentStatus.OUT_FOR_DELIVERY,
+};
+
+/** Transitions that require a hubId */
+const HUB_REQUIRED_TRANSITIONS = new Set<ShipmentStatus>([
+  ShipmentStatus.AT_ORIGIN_HUB,
+  ShipmentStatus.AT_DESTINATION_HUB,
+]);
+
+export const transitionShipmentStatus = async (
+  shipmentId: string,
+  userId: string,
+  userRole: string,
+  payload: StatusTransitionInput,
+  requestId?: string,
+) => {
+  const shipment = await prisma.shipment.findUnique({
+    where: { id: shipmentId, deletedAt: null },
+    select: { id: true, status: true, trackingNumber: true },
+  });
+  if (!shipment) throw NotFoundError('Shipment not found');
+
+  const currentStatus = shipment.status as ShipmentStatus;
+  const targetStatus  = payload.status;
+
+  if (userRole === 'ADMIN') {
+    // Admin override — any transition allowed but adminReason is required
+    if (!payload.adminReason) {
+      throw BadRequestError('Admin status overrides require adminReason', [
+        { field: 'adminReason', code: 'ADMIN_REASON_REQUIRED', message: 'Provide adminReason when overriding shipment status as admin' },
+      ]);
+    }
+  } else {
+    // Courier — must have an active (IN_PROGRESS) assignment
+    const courierProfile = await prisma.courierProfile.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+    if (!courierProfile) throw ForbiddenError('No courier profile found for your account');
+
+    const assignment = await prisma.courierAssignment.findFirst({
+      where: {
+        shipmentId,
+        courierId: courierProfile.id,
+        status: AssignmentStatus.IN_PROGRESS,
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+    if (!assignment) {
+      throw new AppError('You do not have an active assignment for this shipment', 403, [
+        { code: 'NO_ACTIVE_ASSIGNMENT', message: 'Status transitions require an IN_PROGRESS assignment' },
+      ]);
+    }
+
+    // Validate allowed state machine transition
+    const allowedNext = COURIER_TRANSITIONS[currentStatus];
+    if (allowedNext !== targetStatus) {
+      throw BadRequestError(
+        `Invalid status transition from ${currentStatus} to ${targetStatus}`,
+        [{
+          code: 'INVALID_TRANSITION',
+          message: allowedNext
+            ? `From ${currentStatus} the only valid next status is ${allowedNext}`
+            : `No courier-driven transition is defined from status ${currentStatus}`,
+        }],
+      );
+    }
+
+    // hubId required for AT_ORIGIN_HUB and AT_DESTINATION_HUB
+    if (HUB_REQUIRED_TRANSITIONS.has(targetStatus) && !payload.hubId) {
+      throw BadRequestError(`hubId is required when transitioning to ${targetStatus}`, [
+        { field: 'hubId', code: 'HUB_ID_REQUIRED', message: `Provide a hubId for ${targetStatus} transitions` },
+      ]);
+    }
+  }
+
+  const actorRole = userRole === 'ADMIN' ? Role.ADMIN : Role.COURIER;
+
+  await prisma.$transaction(async (tx) => {
+    await tx.shipment.update({
+      where: { id: shipmentId },
+      data: { status: targetStatus },
+    });
+
+    await tx.trackingEvent.create({
+      data: {
+        shipmentId,
+        eventType: targetStatus,
+        hubId: payload.hubId ?? null,
+        location: payload.location ?? null,
+        notes: payload.adminReason
+          ? `Admin override: ${payload.adminReason}`
+          : (payload.notes ?? `Status updated to ${targetStatus}`),
+        actorId: userId,
+        actorRole,
+      },
+    });
+
+    if (userRole === 'ADMIN' && payload.adminReason) {
+      await tx.auditLog.create({
+        data: {
+          actorId: userId,
+          actorRole: Role.ADMIN,
+          action: 'ADMIN_STATUS_OVERRIDE',
+          entityType: 'Shipment',
+          entityId: shipmentId,
+          requestId: requestId ?? null,
+          reason: payload.adminReason,
+          oldValues: { status: currentStatus } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+          newValues: { status: targetStatus } as any,   // eslint-disable-line @typescript-eslint/no-explicit-any
+        },
+      });
+    }
+  });
+
+  return {
+    shipmentId,
+    trackingNumber: shipment.trackingNumber,
+    previousStatus: currentStatus,
+    status: targetStatus,
+  };
+};
