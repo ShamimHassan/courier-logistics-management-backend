@@ -9,6 +9,7 @@ import usersRoutes from '../modules/users/users.routes';
 import couriersRoutes from '../modules/couriers/couriers.routes';
 import shipmentsRoutes from '../modules/shipments/shipments.routes';
 import adminRoutes from '../modules/admin/admin.routes';
+import assignmentsRoutes from '../modules/assignments/assignments.routes';
 
 const router = Router();
 
@@ -50,6 +51,10 @@ router.get('/', (_req: Request, res: Response) => {
           assign: 'POST /api/v1/admin/shipments/:id/assign',
           unassigned: 'GET /api/v1/admin/assignments/unassigned',
         },
+        assignments: {
+          accept: 'PATCH /api/v1/assignments/:id/accept',
+          reject: 'PATCH /api/v1/assignments/:id/reject',
+        },
       },
     }),
   );
@@ -71,6 +76,7 @@ router.use('/users', usersRoutes);
 router.use('/couriers', couriersRoutes);
 router.use('/shipments', shipmentsRoutes);
 router.use('/admin', adminRoutes);
+router.use('/assignments', assignmentsRoutes);
 
 // ─── Admin-only stub for RBAC test (kept for Step 10 backward compat) ─────────
 router.get('/admin/test', authenticate, authorize('ADMIN'), (_req: Request, res: Response) => {
