@@ -1,0 +1,82 @@
+services:
+  # ─── Web Service ─────────────────────────────────────────────────────────────
+  - type: web
+    name: courierflow-api
+    runtime: node
+    region: singapore          # closest to Bangladesh
+    plan: free
+
+    buildCommand: npm install && npx prisma generate && npx prisma migrate deploy && npm run build
+    startCommand: node dist/server.js
+
+    healthCheckPath: /api/v1/health
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+
+      # ── Database (add from Render Postgres dashboard) ──────────────────────
+      - key: DATABASE_URL
+        fromDatabase:
+          name: courierflow-db
+          property: connectionString
+      - key: DIRECT_URL
+        fromDatabase:
+          name: courierflow-db
+          property: connectionString
+
+      # ── JWT ────────────────────────────────────────────────────────────────
+      - key: JWT_ACCESS_SECRET
+        generateValue: true        # Render auto-generates a secure random value
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: ACCESS_TOKEN_TTL
+        value: 15m
+      - key: REFRESH_TOKEN_TTL
+        value: 30d
+
+      # ── SSLCommerz (set via Render dashboard — do NOT commit real values) ──
+      - key: SSLCOMMERZ_STORE_ID
+        sync: false
+      - key: SSLCOMMERZ_STORE_PASSWORD
+        sync: false
+      - key: SSLCOMMERZ_IS_SANDBOX
+        value: "false"
+
+      # ── App URLs ───────────────────────────────────────────────────────────
+      - key: APP_BASE_URL
+        value: https://courierflow-api.onrender.com
+      - key: CORS_ORIGINS
+        value: https://courierflow.vercel.app,http://localhost:3000,http://localhost:5173
+
+      # ── Redis (add from Render Redis dashboard) ────────────────────────────
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: courierflow-cache
+          property: connectionString
+
+      # ── Google OAuth (optional, set via dashboard) ─────────────────────────
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_CALLBACK_URL
+        value: https://courierflow-api.onrender.com/api/v1/auth/google/callback
+
+  # ─── Redis ───────────────────────────────────────────────────────────────────
+  - type: redis
+    name: courierflow-cache
+    region: singapore
+    plan: free
+    ipAllowList: []              # Allow all (restrict to Render internal IPs in production)
+
+databases:
+  # ─── PostgreSQL ───────────────────────────────────────────────────────────────
+  - name: courierflow-db
+    region: singapore
+    plan: free
+    databaseName: courierflow
+    user: courierflow_user
