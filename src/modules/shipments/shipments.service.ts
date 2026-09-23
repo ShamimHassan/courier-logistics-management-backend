@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
-import { AssignmentStatus, PaymentStatus, Role, ShipmentStatus } from '../../../prisma/generated/client/enums';
+import { AssignmentStatus, DeliveryAttemptStatus, PaymentStatus, Role, ShipmentStatus } from '../../../prisma/generated/client/enums';
 import { prisma } from '../../config/database';
+import { cacheGet, cacheDel, cacheKeys, cacheSet, CACHE_TTL } from '../../config/redis';
 import { AppError, BadRequestError, ForbiddenError, NotFoundError, UnprocessableEntityError } from '../../common/errors/AppError';
 import type { CancelShipmentInput, CreateShipmentInput, ListShipmentsQuery, QuoteInput, SearchShipmentsQuery, UpdateShipmentInput } from './shipments.validation';
 
@@ -623,6 +624,12 @@ const assertShipmentAccess = async (
   throw ForbiddenError('Insufficient permissions');
 };
 
+// ─── Cache invalidation helper ────────────────────────────────────────────────
+
+const invalidateTrackingCache = async (shipmentId: string) => {
+  await cacheDel(cacheKeys.shipmentTracking(shipmentId));
+};
+
 // ─── Step 16: Search shipments ────────────────────────────────────────────────
 
 export const searchShipments = async (
@@ -887,6 +894,9 @@ export const cancelShipment = async (
     });
   });
 
+  // Invalidate tracking cache
+  await invalidateTrackingCache(shipmentId);
+
   return {
     shipmentId,
     trackingNumber: shipment.trackingNumber,
@@ -927,6 +937,11 @@ export const getShipmentTracking = async (
   // Reuse ownership check — throws 403/404 if not authorised
   await assertShipmentAccess(shipmentId, userId, userRole);
 
+  // ── Cache check (30s TTL) ──────────────────────────────────────────────────
+  const cacheKey = cacheKeys.shipmentTracking(shipmentId);
+  const cached = await cacheGet<ReturnType<typeof humanReadableTime> extends string ? never : unknown[]>(cacheKey);
+  if (cached) return cached;
+
   const events = await prisma.trackingEvent.findMany({
     where: { shipmentId },
     select: {
@@ -943,10 +958,15 @@ export const getShipmentTracking = async (
     orderBy: { createdAt: 'asc' }, // chronological — oldest first
   });
 
-  return events.map((e) => ({
+  const result = events.map((e) => ({
     ...e,
     humanReadableTime: humanReadableTime(e.createdAt),
   }));
+
+  // Cache the result
+  await cacheSet(cacheKey, result, CACHE_TTL.TRACKING);
+
+  return result;
 };
 
 // ─── Step 21: Pickup ──────────────────────────────────────────────────────────
@@ -1036,6 +1056,9 @@ export const pickupShipment = async (
       },
     });
   });
+
+  // Invalidate tracking cache
+  await invalidateTrackingCache(shipmentId);
 
   return {
     shipmentId,
@@ -1174,6 +1197,9 @@ export const transitionShipmentStatus = async (
     }
   });
 
+  // Invalidate tracking cache
+  await invalidateTrackingCache(shipmentId);
+
   return {
     shipmentId,
     trackingNumber: shipment.trackingNumber,
@@ -1185,7 +1211,6 @@ export const transitionShipmentStatus = async (
 // ─── Step 22: Delivery attempt ────────────────────────────────────────────────
 
 import type { DeliveryAttemptInput } from './shipments.validation';
-import { DeliveryAttemptStatus } from '../../../prisma/generated/client/enums';
 
 /** Courier earns 60% of the shipment base amount */
 const COURIER_EARNINGS_RATIO = 0.6;

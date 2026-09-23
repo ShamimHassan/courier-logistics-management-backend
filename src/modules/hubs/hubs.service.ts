@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { prisma } from '../../config/database';
 import { NotFoundError } from '../../common/errors/AppError';
+import { cacheGet, cacheDel, cacheKeys, cacheSet, CACHE_TTL } from '../../config/redis';
 
 // ─── Validation ───────────────────────────────────────────────────────────────
 
@@ -59,6 +60,10 @@ export const listHubs = async (query: ListHubsQuery) => {
   const { zoneId, status, page, limit } = query;
   const skip = (page - 1) * limit;
 
+  const cacheKey = cacheKeys.hubsList(`${zoneId ?? 'all'}-${status}-${page}-${limit}`);
+  const cached = await cacheGet(cacheKey);
+  if (cached) return cached;
+
   const where: Record<string, unknown> = { deletedAt: null };
   if (status === 'active')   where.isActive = true;
   if (status === 'inactive') where.isActive = false;
@@ -77,27 +82,36 @@ export const listHubs = async (query: ListHubsQuery) => {
     }),
   ]);
 
-  return {
+  const result = {
     hubs,
     meta: { page, limit, totalCount, totalPages: Math.ceil(totalCount / limit) },
   };
+
+  await cacheSet(cacheKey, result, CACHE_TTL.HUBS_LIST);
+  return result;
 };
 
 // ─── GET /hubs/:id ─────────────────────────────────────────────────────────────
 
 export const getHubById = async (hubId: string) => {
+  const cacheKey = cacheKeys.hubById(hubId);
+  const cached = await cacheGet(cacheKey);
+  if (cached) return cached;
+
   const hub = await prisma.hub.findUnique({
     where: { id: hubId, deletedAt: null },
     select: hubSelect,
   });
   if (!hub) throw NotFoundError('Hub not found');
+
+  await cacheSet(cacheKey, hub, CACHE_TTL.HUBS_LIST);
   return hub;
 };
 
 // ─── POST /admin/hubs ─────────────────────────────────────────────────────────
 
 export const createHub = async (input: CreateHubInput) => {
-  return prisma.hub.create({
+  const hub = await prisma.hub.create({
     data: {
       name:              input.name,
       code:              input.code,
@@ -113,6 +127,9 @@ export const createHub = async (input: CreateHubInput) => {
     },
     select: hubSelect,
   });
+  // Invalidate list cache on write
+  await cacheDel(cacheKeys.hubsList('all-active-1-20'));
+  return hub;
 };
 
 // ─── PATCH /admin/hubs/:id ────────────────────────────────────────────────────
@@ -124,7 +141,7 @@ export const updateHub = async (hubId: string, input: UpdateHubInput) => {
   });
   if (!existing) throw NotFoundError('Hub not found');
 
-  return prisma.hub.update({
+  const hub = await prisma.hub.update({
     where: { id: hubId },
     data: {
       ...(input.name            !== undefined ? { name:              input.name }            : {}),
@@ -140,4 +157,7 @@ export const updateHub = async (hubId: string, input: UpdateHubInput) => {
     },
     select: hubSelect,
   });
+  // Invalidate specific hub + list cache on write
+  await cacheDel(cacheKeys.hubById(hubId));
+  return hub;
 };
