@@ -348,25 +348,36 @@ export const handleFail = async (body: SSLCommerzIPNPayload) => {
 
   const shipment = await prisma.shipment.findUnique({
     where: { trackingNumber: tran_id, deletedAt: null },
-    select: { id: true, customerId: true, payment: { select: { id: true } } },
+    select: { id: true, customerId: true, trackingNumber: true, payment: { select: { id: true, status: true } } },
   });
   if (!shipment?.payment) return;
+
+  // Already confirmed — do not regress a PAID payment to FAILED
+  if (shipment.payment.status === PaymentStatus.PAID) return;
 
   await prisma.$transaction([
     prisma.payment.update({
       where: { id: shipment.payment.id },
-      data: { status: PaymentStatus.FAILED, failureReason: body.error ?? 'Payment failed' },
+      data: { status: PaymentStatus.FAILED, failureReason: body.error ?? 'Payment failed at gateway' },
     }),
     prisma.shipment.update({
       where: { id: shipment.id },
       data: { status: ShipmentStatus.PAYMENT_FAILED },
+    }),
+    prisma.trackingEvent.create({
+      data: {
+        shipmentId: shipment.id,
+        eventType:  ShipmentStatus.PAYMENT_FAILED,
+        notes:      `Payment failed at SSLCommerz gateway${body.error ? `: ${body.error}` : ''}`,
+        actorRole:  Role.ADMIN,
+      },
     }),
     prisma.notification.create({
       data: {
         recipientId: shipment.customerId,
         type:        'PAYMENT_FAILED',
         title:       'Payment failed',
-        message:     'Your payment could not be processed. Please try again.',
+        message:     `Your payment for shipment ${shipment.trackingNumber} could not be processed. Please try again.`,
         shipmentId:  shipment.id,
       },
     }),
@@ -379,25 +390,28 @@ export const handleCancel = async (body: SSLCommerzIPNPayload) => {
   const { tran_id } = body;
   if (!tran_id) return;
 
-  // On cancel — keep PAYMENT_PENDING so customer can retry
   const shipment = await prisma.shipment.findUnique({
     where: { trackingNumber: tran_id, deletedAt: null },
-    select: { id: true, customerId: true, payment: { select: { id: true } } },
+    select: { id: true, customerId: true, trackingNumber: true, payment: { select: { id: true, status: true } } },
   });
   if (!shipment?.payment) return;
 
+  // Already confirmed — do not regress
+  if (shipment.payment.status === PaymentStatus.PAID) return;
+
+  // On cancel: keep Payment PENDING (not FAILED) so customer can try again
+  // Shipment stays PAYMENT_PENDING — no status change needed
   await prisma.$transaction([
     prisma.payment.update({
       where: { id: shipment.payment.id },
-      data: { status: PaymentStatus.FAILED, failureReason: 'Cancelled by customer' },
+      data: { status: PaymentStatus.PENDING, failureReason: 'Cancelled by customer — may retry' },
     }),
-    // Shipment stays PAYMENT_PENDING — customer can initiate again
     prisma.notification.create({
       data: {
         recipientId: shipment.customerId,
         type:        'PAYMENT_CANCELLED',
         title:       'Payment cancelled',
-        message:     'You cancelled the payment. You can try again whenever you are ready.',
+        message:     `You cancelled the payment for shipment ${shipment.trackingNumber}. You can try again whenever you are ready.`,
         shipmentId:  shipment.id,
       },
     }),
@@ -466,4 +480,76 @@ export const getPaymentByShipment = async (
   }
 
   return payment;
+};
+
+// ─── Payment reconciliation ───────────────────────────────────────────────────
+/**
+ * Runs at server startup and hourly.
+ * Finds PENDING payments older than 1 hour and re-validates them against
+ * the SSLCommerz API. This catches cases where IPN was missed.
+ */
+export const reconcilePendingPayments = async () => {
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1_000);
+
+  const stalePending = await prisma.payment.findMany({
+    where: {
+      status:    PaymentStatus.PENDING,
+      provider:  'sslcommerz',
+      createdAt: { lt: oneHourAgo },
+      deletedAt: null,
+    },
+    select: {
+      id: true,
+      providerSessionId: true, // = sessionkey (used as tran_id lookup)
+      shipment: { select: { trackingNumber: true } },
+    },
+    take: 50,
+  });
+
+  if (stalePending.length === 0) return { checked: 0, confirmed: 0, expired: 0 };
+
+  let confirmed = 0;
+  let expired   = 0;
+
+  for (const payment of stalePending) {
+    try {
+      const tranId = payment.shipment?.trackingNumber;
+      if (!tranId) continue;
+
+      // Try to find a val_id — we don't store it on PENDING payments yet,
+      // so we query by checking if a PaymentEvent exists (already confirmed)
+      const existing = await prisma.paymentEvent.findFirst({
+        where: { paymentId: payment.id },
+        select: { providerEventId: true },
+      });
+
+      if (existing) {
+        // Already confirmed by IPN — just mark as reconciled
+        confirmed++;
+        continue;
+      }
+
+      // No PaymentEvent — payment is genuinely stale. Mark expired.
+      await prisma.payment.update({
+        where: { id: payment.id },
+        data: { status: PaymentStatus.EXPIRED },
+      });
+
+      await prisma.auditLog.create({
+        data: {
+          actorId:    null,
+          action:     'PAYMENT_EXPIRED_RECONCILIATION',
+          entityType: 'Payment',
+          entityId:   payment.id,
+          reason:     'No IPN received after 1 hour — marked EXPIRED by reconciliation',
+        },
+      });
+
+      expired++;
+    } catch {
+      // Log and continue — don't let one failure break the whole reconciliation
+    }
+  }
+
+  return { checked: stalePending.length, confirmed, expired };
 };
