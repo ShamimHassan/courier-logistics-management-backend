@@ -1181,3 +1181,229 @@ export const transitionShipmentStatus = async (
     status: targetStatus,
   };
 };
+
+// ─── Step 22: Delivery attempt ────────────────────────────────────────────────
+
+import type { DeliveryAttemptInput } from './shipments.validation';
+import { DeliveryAttemptStatus } from '../../../prisma/generated/client/enums';
+
+/** Courier earns 60% of the shipment base amount */
+const COURIER_EARNINGS_RATIO = 0.6;
+
+export const recordDeliveryAttempt = async (
+  shipmentId: string,
+  userId: string,
+  payload: DeliveryAttemptInput,
+  requestId?: string,
+) => {
+  // Resolve courier profile
+  const courierProfile = await prisma.courierProfile.findUnique({
+    where: { userId },
+    select: { id: true, totalDeliveries: true, totalEarnings: true },
+  });
+  if (!courierProfile) throw ForbiddenError('No courier profile found for your account');
+
+  // Fetch shipment
+  const shipment = await prisma.shipment.findUnique({
+    where: { id: shipmentId, deletedAt: null },
+    select: {
+      id: true,
+      status: true,
+      trackingNumber: true,
+      customerId: true,
+      baseAmount: true,
+      deliveryAttempts: true,
+    },
+  });
+  if (!shipment) throw NotFoundError('Shipment not found');
+
+  if (shipment.status !== ShipmentStatus.OUT_FOR_DELIVERY) {
+    throw new AppError(
+      `Delivery attempt not allowed in status "${shipment.status}"`,
+      409,
+      [{ code: 'INVALID_STATUS', message: `Shipment must be OUT_FOR_DELIVERY. Current: ${shipment.status}` }],
+    );
+  }
+
+  // Verify courier has an IN_PROGRESS assignment
+  const assignment = await prisma.courierAssignment.findFirst({
+    where: {
+      shipmentId,
+      courierId: courierProfile.id,
+      status: AssignmentStatus.IN_PROGRESS,
+      deletedAt: null,
+    },
+    select: { id: true },
+  });
+  if (!assignment) {
+    throw new AppError('No active in-progress assignment found for this shipment', 403, [
+      { code: 'NO_ACTIVE_ASSIGNMENT', message: 'Delivery attempt requires an IN_PROGRESS assignment' },
+    ]);
+  }
+
+  const newAttemptCount = shipment.deliveryAttempts + 1;
+  const adminUser = await prisma.user.findFirst({
+    where: { role: Role.ADMIN },
+    select: { id: true },
+  });
+
+  // ── DELIVERED path ─────────────────────────────────────────────────────────
+  if (payload.outcome === 'DELIVERED') {
+    const courierEarnings = Math.floor(shipment.baseAmount * COURIER_EARNINGS_RATIO);
+
+    await prisma.$transaction(async (tx) => {
+      // Increment attempts + mark DELIVERED
+      await tx.shipment.update({
+        where: { id: shipmentId },
+        data: {
+          status: ShipmentStatus.DELIVERED,
+          deliveryAttempts: newAttemptCount,
+        },
+      });
+
+      // DeliveryAttempt record
+      await tx.deliveryAttempt.create({
+        data: {
+          shipmentId,
+          assignmentId: assignment.id,
+          status: DeliveryAttemptStatus.DELIVERED,
+          recipientName: payload.recipientName,
+          signatureUrl: payload.signature ?? null,
+          photoProofUrl: payload.photoProofUrl,
+          otpVerified: payload.otpVerified ?? false,
+          attemptedAt: new Date(),
+        },
+      });
+
+      // Assignment → COMPLETED
+      await tx.courierAssignment.update({
+        where: { id: assignment.id },
+        data: {
+          status: AssignmentStatus.COMPLETED,
+          completedAt: new Date(),
+          earnings: courierEarnings,
+        },
+      });
+
+      // Courier: available + increment stats
+      await tx.courierProfile.update({
+        where: { id: courierProfile.id },
+        data: {
+          available: true,
+          totalDeliveries: { increment: 1 },
+          totalEarnings: { increment: courierEarnings },
+        },
+      });
+
+      // TrackingEvent
+      await tx.trackingEvent.create({
+        data: {
+          shipmentId,
+          eventType: ShipmentStatus.DELIVERED,
+          notes: `Delivered to ${payload.recipientName}. OTP verified: ${payload.otpVerified ?? false}`,
+          actorId: userId,
+          actorRole: Role.COURIER,
+        },
+      });
+
+      // Notification to customer
+      await tx.notification.create({
+        data: {
+          recipientId: shipment.customerId,
+          type: 'SHIPMENT_DELIVERED',
+          title: 'Your shipment has been delivered',
+          message: `Shipment ${shipment.trackingNumber} was delivered to ${payload.recipientName}. Please rate your experience.`,
+          shipmentId,
+        },
+      });
+
+      // AuditLog
+      await tx.auditLog.create({
+        data: {
+          actorId: userId,
+          actorRole: Role.COURIER,
+          action: 'SHIPMENT_DELIVERED',
+          entityType: 'Shipment',
+          entityId: shipmentId,
+          requestId: requestId ?? null,
+          newValues: { status: ShipmentStatus.DELIVERED, courierEarnings } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+        },
+      });
+    });
+
+    return {
+      outcome: 'DELIVERED' as const,
+      shipmentId,
+      trackingNumber: shipment.trackingNumber,
+      status: ShipmentStatus.DELIVERED,
+      deliveryAttempts: newAttemptCount,
+      courierEarnings,
+      recipientName: payload.recipientName,
+    };
+  }
+
+  // ── FAILED path ────────────────────────────────────────────────────────────
+  const isReturnRequired = newAttemptCount >= 3;
+  const nextShipmentStatus = isReturnRequired
+    ? ShipmentStatus.RETURN_REQUESTED
+    : ShipmentStatus.AT_DESTINATION_HUB;
+
+  await prisma.$transaction(async (tx) => {
+    // Increment attempts + update status
+    await tx.shipment.update({
+      where: { id: shipmentId },
+      data: {
+        status: nextShipmentStatus,
+        deliveryAttempts: newAttemptCount,
+      },
+    });
+
+    // DeliveryAttempt record
+    await tx.deliveryAttempt.create({
+      data: {
+        shipmentId,
+        assignmentId: assignment.id,
+        status: DeliveryAttemptStatus.FAILED,
+        reason: payload.reason,
+        courierNotes: payload.notes,
+        attemptedAt: new Date(),
+      },
+    });
+
+    // TrackingEvent
+    await tx.trackingEvent.create({
+      data: {
+        shipmentId,
+        eventType: nextShipmentStatus,
+        notes: isReturnRequired
+          ? `Delivery failed after ${newAttemptCount} attempts. Reason: ${payload.reason}. Return initiated.`
+          : `Delivery attempt ${newAttemptCount} failed. Reason: ${payload.reason}. ${payload.notes}`,
+        actorId: userId,
+        actorRole: Role.COURIER,
+      },
+    });
+
+    // Notify admin if return required
+    if (isReturnRequired && adminUser) {
+      await tx.notification.create({
+        data: {
+          recipientId: adminUser.id,
+          type: 'RETURN_REQUESTED',
+          title: 'Shipment requires return after 3 failed attempts',
+          message: `Shipment ${shipment.trackingNumber} failed 3 delivery attempts. Last reason: ${payload.reason}. Return process initiated.`,
+          shipmentId,
+        },
+      });
+    }
+  });
+
+  return {
+    outcome: 'FAILED' as const,
+    shipmentId,
+    trackingNumber: shipment.trackingNumber,
+    status: nextShipmentStatus,
+    deliveryAttempts: newAttemptCount,
+    reason: payload.reason,
+    returnInitiated: isReturnRequired,
+  };
+};

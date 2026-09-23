@@ -11,6 +11,7 @@ import {
   getShipmentTracking,
   listShipments,
   pickupShipment,
+  recordDeliveryAttempt,
   searchShipments,
   transitionShipmentStatus,
   updateShipment,
@@ -18,6 +19,7 @@ import {
 import {
   cancelShipmentSchema,
   createShipmentSchema,
+  deliveryAttemptSchema,
   listShipmentsSchema,
   pickupSchema,
   quoteSchema,
@@ -158,6 +160,29 @@ router.patch(
       req.id,
     );
     res.status(StatusCodes.OK).json(successResponse('Shipment status updated successfully', result));
+  },
+);
+
+// ─── POST /shipments/:id/delivery-attempts — Step 22 ─────────────────────────
+
+router.post(
+  '/:id/delivery-attempts',
+  authenticate,
+  authorize('COURIER'),
+  async (req: Request, res: Response) => {
+    const payload = deliveryAttemptSchema.parse(req.body);
+    const result = await recordDeliveryAttempt(
+      String(req.params.id),
+      req.user!.id,
+      payload,
+      req.id,
+    );
+    res.status(StatusCodes.OK).json(
+      successResponse(
+        result.outcome === 'DELIVERED' ? 'Shipment delivered successfully' : 'Delivery attempt recorded',
+        result,
+      ),
+    );
   },
 );
 

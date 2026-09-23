@@ -287,3 +287,34 @@ export const statusTransitionSchema = z.object({
 });
 
 export type StatusTransitionInput = z.infer<typeof statusTransitionSchema>;
+
+// ─── Delivery attempt ─────────────────────────────────────────────────────────
+
+const FAILURE_REASONS = [
+  'RECIPIENT_UNAVAILABLE',
+  'WRONG_ADDRESS',
+  'REFUSED',
+  'BAD_WEATHER',
+  'OTHER',
+] as const;
+
+export const deliveryAttemptSchema = z.discriminatedUnion('outcome', [
+  // SUCCESS path
+  z.object({
+    outcome: z.literal('DELIVERED'),
+    recipientName: z.string().trim().min(2, 'recipientName is required').max(100),
+    signature: z.string().trim().url().optional(),
+    photoProofUrl: z.string().trim().url('photoProofUrl must be a valid URL'),
+    otpVerified: z.boolean().optional().default(false),
+  }),
+  // FAILURE path
+  z.object({
+    outcome: z.literal('FAILED'),
+    reason: z.enum(FAILURE_REASONS, {
+      error: `reason must be one of: ${FAILURE_REASONS.join(', ')}`,
+    }),
+    notes: z.string().trim().min(3, 'notes is required for failed attempts').max(500),
+  }),
+]);
+
+export type DeliveryAttemptInput = z.infer<typeof deliveryAttemptSchema>;
