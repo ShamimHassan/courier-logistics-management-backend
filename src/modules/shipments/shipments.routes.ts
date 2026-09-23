@@ -27,6 +27,7 @@ import {
   statusTransitionSchema,
   updateShipmentSchema,
 } from './shipments.validation';
+import { createRating, ratingSchema } from '../ratings/ratings.service';
 
 const router = Router();
 
@@ -182,6 +183,21 @@ router.post(
         result.outcome === 'DELIVERED' ? 'Shipment delivered successfully' : 'Delivery attempt recorded',
         result,
       ),
+    );
+  },
+);
+
+// ─── POST /shipments/:id/rating — Step 23 ────────────────────────────────────
+
+router.post(
+  '/:id/rating',
+  authenticate,
+  authorize('CUSTOMER'),
+  async (req: Request, res: Response) => {
+    const payload = ratingSchema.parse(req.body);
+    const result = await createRating(String(req.params.id), req.user!.id, payload, req.id);
+    res.status(StatusCodes.CREATED).json(
+      successResponse('Rating submitted successfully', result),
     );
   },
 );

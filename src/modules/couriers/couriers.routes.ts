@@ -3,8 +3,8 @@ import { StatusCodes } from 'http-status-codes';
 import { successResponse } from '../../common/response';
 import { authenticate } from '../../common/middleware/authenticate';
 import { authorize } from '../../common/middleware/authorize';
-import { getCourierMe, setCourierAvailability } from './couriers.service';
-import { setAvailabilitySchema } from './couriers.validation';
+import { getCourierMe, getCourierEarnings, setCourierAvailability } from './couriers.service';
+import { earningsQuerySchema, setAvailabilitySchema } from './couriers.validation';
 
 const router = Router();
 
@@ -15,9 +15,18 @@ router.use(authenticate, authorize('COURIER'));
 
 router.get('/me', async (req: Request, res: Response) => {
   const profile = await getCourierMe(req.user!.id);
-
   res.status(StatusCodes.OK).json(
     successResponse('Courier profile retrieved successfully', { profile }),
+  );
+});
+
+// ─── GET /couriers/me/earnings ────────────────────────────────────────────────
+
+router.get('/me/earnings', async (req: Request, res: Response) => {
+  const query = earningsQuerySchema.parse(req.query);
+  const result = await getCourierEarnings(req.user!.id, query);
+  res.status(StatusCodes.OK).json(
+    successResponse('Earnings retrieved successfully', result),
   );
 });
 

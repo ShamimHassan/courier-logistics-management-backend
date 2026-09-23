@@ -193,3 +193,109 @@ export const setCourierAvailability = async ({
     },
   };
 };
+
+// ─── GET /couriers/me/earnings ────────────────────────────────────────────────
+
+import type { EarningsQuery } from './couriers.validation';
+
+export const getCourierEarnings = async (userId: string, query: EarningsQuery) => {
+  const { page, limit, fromDate, toDate } = query;
+
+  const profile = await prisma.courierProfile.findUnique({
+    where: { userId },
+    select: {
+      id: true,
+      totalDeliveries: true,
+      totalEarnings: true,
+    },
+  });
+
+  if (!profile) {
+    throw NotFoundError('Courier profile not found');
+  }
+
+  const dateFilter = fromDate || toDate
+    ? { completedAt: { ...(fromDate ? { gte: fromDate } : {}), ...(toDate ? { lte: toDate } : {}) } }
+    : {};
+
+  const where = {
+    courierId: profile.id,
+    status: AssignmentStatus.COMPLETED,
+    deletedAt: null,
+    ...dateFilter,
+  };
+
+  const [totalCount, assignments] = await Promise.all([
+    prisma.courierAssignment.count({ where }),
+    prisma.courierAssignment.findMany({
+      where,
+      select: {
+        id: true,
+        earnings: true,
+        completedAt: true,
+        shipment: {
+          select: {
+            trackingNumber: true,
+            totalAmount: true,
+            serviceType: true,
+          },
+        },
+      },
+      orderBy: { completedAt: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit,
+    }),
+  ]);
+
+  // Summary stats using aggregate over the date-filtered range
+  const agg = await prisma.courierAssignment.aggregate({
+    where,
+    _sum: { earnings: true },
+    _count: { id: true },
+  });
+
+  // This-week and this-month windows
+  const now = new Date();
+  const weekAgo  = new Date(now.getTime() - 7  * 86_400_000);
+  const monthAgo = new Date(now.getTime() - 30 * 86_400_000);
+
+  const [weekAgg, monthAgg] = await Promise.all([
+    prisma.courierAssignment.aggregate({
+      where: { courierId: profile.id, status: AssignmentStatus.COMPLETED, deletedAt: null, completedAt: { gte: weekAgo } },
+      _sum: { earnings: true },
+    }),
+    prisma.courierAssignment.aggregate({
+      where: { courierId: profile.id, status: AssignmentStatus.COMPLETED, deletedAt: null, completedAt: { gte: monthAgo } },
+      _sum: { earnings: true },
+    }),
+  ]);
+
+  const totalFilteredCount = agg._count.id;
+  const totalFilteredEarnings = agg._sum.earnings ?? 0;
+
+  return {
+    deliveries: assignments.map((a) => ({
+      assignmentId: a.id,
+      trackingNumber: a.shipment.trackingNumber,
+      serviceType: a.shipment.serviceType,
+      shipmentAmount: a.shipment.totalAmount,
+      courierEarning: a.earnings,
+      completedAt: a.completedAt,
+    })),
+    meta: {
+      page,
+      limit,
+      totalCount,
+      totalPages: Math.ceil(totalCount / limit),
+    },
+    summary: {
+      totalDeliveries: totalFilteredCount,
+      totalEarnings: totalFilteredEarnings,
+      thisWeek:  weekAgg._sum.earnings  ?? 0,
+      thisMonth: monthAgg._sum.earnings ?? 0,
+      averagePerDelivery: totalFilteredCount > 0
+        ? Math.round(totalFilteredEarnings / totalFilteredCount)
+        : 0,
+    },
+  };
+};
