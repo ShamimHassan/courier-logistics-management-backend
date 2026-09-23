@@ -307,3 +307,329 @@ export const listUnassignedShipments = async (query: UnassignedListQuery) => {
     },
   };
 };
+
+// ─── Pricing rules ────────────────────────────────────────────────────────────
+
+import type {
+  AuditLogQuery,
+  CreatePricingRuleInput,
+  ListUsersQuery,
+  UpdatePricingRuleInput,
+  UpdateUserRoleInput,
+  UpdateUserStatusInput,
+} from './admin.validation';
+
+export const createPricingRule = async (input: CreatePricingRuleInput, adminId: string) => {
+  // Bump version: find latest version for same zone/service combo
+  const latest = await prisma.pricingRule.findFirst({
+    where: {
+      originZoneId:      input.originZoneId      ?? null,
+      destinationZoneId: input.destinationZoneId ?? null,
+      serviceType:       input.serviceType,
+    },
+    orderBy: { version: 'desc' },
+    select: { version: true },
+  });
+  const nextVersion = (latest?.version ?? 0) + 1;
+
+  const rule = await prisma.pricingRule.create({
+    data: {
+      originZoneId:        input.originZoneId        ?? null,
+      destinationZoneId:   input.destinationZoneId   ?? null,
+      serviceType:         input.serviceType,
+      minWeightKg:         input.minWeightKg,
+      maxWeightKg:         input.maxWeightKg,
+      basePrice:           input.basePrice,
+      weightSurchargePerKg: input.weightSurchargePerKg,
+      expressFee:          input.expressFee,
+      insuranceFeePercent: input.insuranceFeePercent,
+      taxRatePercent:      input.taxRatePercent,
+      codFeePercent:       input.codFeePercent,
+      codFeeMin:           input.codFeeMin,
+      version:             nextVersion,
+      isActive:            true,
+      effectiveFrom:       input.effectiveFrom,
+      effectiveUntil:      input.effectiveUntil ?? null,
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      actorId:    adminId,
+      actorRole:  Role.ADMIN,
+      action:     'PRICING_RULE_CREATED',
+      entityType: 'PricingRule',
+      entityId:   rule.id,
+      newValues:  { version: nextVersion, serviceType: input.serviceType } as any, // eslint-disable-line
+    },
+  });
+
+  return rule;
+};
+
+export const updatePricingRule = async (
+  ruleId: string,
+  input: UpdatePricingRuleInput,
+  adminId: string,
+) => {
+  const existing = await prisma.pricingRule.findUnique({
+    where: { id: ruleId, deletedAt: null },
+    select: { id: true, isActive: true, version: true },
+  });
+  if (!existing) throw NotFoundError('Pricing rule not found');
+
+  const updated = await prisma.pricingRule.update({
+    where: { id: ruleId },
+    data: {
+      ...(input.isActive         !== undefined ? { isActive:         input.isActive }         : {}),
+      ...(input.effectiveUntil   !== undefined ? { effectiveUntil:   input.effectiveUntil }   : {}),
+      ...(input.basePrice        !== undefined ? { basePrice:        input.basePrice }        : {}),
+      ...(input.weightSurchargePerKg !== undefined ? { weightSurchargePerKg: input.weightSurchargePerKg } : {}),
+      ...(input.taxRatePercent   !== undefined ? { taxRatePercent:   input.taxRatePercent }   : {}),
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      actorId:    adminId,
+      actorRole:  Role.ADMIN,
+      action:     'PRICING_RULE_UPDATED',
+      entityType: 'PricingRule',
+      entityId:   ruleId,
+      oldValues:  { isActive: existing.isActive } as any, // eslint-disable-line
+      newValues:  input as any, // eslint-disable-line
+    },
+  });
+
+  return updated;
+};
+
+// ─── User management ──────────────────────────────────────────────────────────
+
+export const listAdminUsers = async (query: ListUsersQuery) => {
+  const { page, limit, role, status, search } = query;
+  const skip = (page - 1) * limit;
+
+  const where: Record<string, unknown> = { deletedAt: null };
+  if (role)   where.role   = role;
+  if (status) where.status = status;
+  if (search) {
+    where.OR = [
+      { name:  { contains: search, mode: 'insensitive' } },
+      { email: { contains: search, mode: 'insensitive' } },
+    ];
+  }
+
+  const [totalCount, users] = await Promise.all([
+    prisma.user.count({ where }),
+    prisma.user.findMany({
+      where,
+      select: {
+        id: true, email: true, name: true, phone: true,
+        role: true, status: true, profileImageUrl: true,
+        lastLoginAt: true, createdAt: true,
+        courierProfile: { select: { approvalStatus: true, available: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
+    }),
+  ]);
+
+  return {
+    users,
+    meta: { page, limit, totalCount, totalPages: Math.ceil(totalCount / limit) },
+  };
+};
+
+export const updateUserStatus = async (
+  userId: string,
+  input: UpdateUserStatusInput,
+  adminId: string,
+  requestId?: string,
+) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId, deletedAt: null },
+    select: { id: true, status: true, email: true },
+  });
+  if (!user) throw NotFoundError('User not found');
+
+  const updated = await prisma.user.update({
+    where: { id: userId },
+    data: { status: input.status },
+    select: { id: true, email: true, name: true, role: true, status: true },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      actorId:    adminId,
+      actorRole:  Role.ADMIN,
+      action:     input.status === UserStatus.SUSPENDED ? 'USER_SUSPENDED' : 'USER_ACTIVATED',
+      entityType: 'User',
+      entityId:   userId,
+      requestId:  requestId ?? null,
+      reason:     input.reason ?? null,
+      oldValues:  { status: user.status }   as any, // eslint-disable-line
+      newValues:  { status: input.status }  as any, // eslint-disable-line
+    },
+  });
+
+  return updated;
+};
+
+export const updateUserRole = async (
+  userId: string,
+  input: UpdateUserRoleInput,
+  adminId: string,
+  requestId?: string,
+) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId, deletedAt: null },
+    select: { id: true, role: true, email: true },
+  });
+  if (!user) throw NotFoundError('User not found');
+
+  const updated = await prisma.user.update({
+    where: { id: userId },
+    data: { role: input.role },
+    select: { id: true, email: true, name: true, role: true, status: true },
+  });
+
+  // If approving as COURIER, create CourierProfile if not exists
+  if (input.role === Role.COURIER) {
+    const existing = await prisma.courierProfile.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+    if (!existing) {
+      await prisma.courierProfile.create({
+        data: {
+          userId,
+          vehicleType:         'MOTORCYCLE',
+          driverLicenseNumber: 'PENDING',
+          available:            false,
+        },
+      });
+    }
+  }
+
+  await prisma.auditLog.create({
+    data: {
+      actorId:    adminId,
+      actorRole:  Role.ADMIN,
+      action:     'USER_ROLE_CHANGED',
+      entityType: 'User',
+      entityId:   userId,
+      requestId:  requestId ?? null,
+      reason:     input.reason,
+      oldValues:  { role: user.role }   as any, // eslint-disable-line
+      newValues:  { role: input.role }  as any, // eslint-disable-line
+    },
+  });
+
+  return updated;
+};
+
+// ─── Audit logs ───────────────────────────────────────────────────────────────
+
+export const listAuditLogs = async (query: AuditLogQuery) => {
+  const { page, limit, actorId, entityType, entityId, action, fromDate, toDate } = query;
+  const skip = (page - 1) * limit;
+
+  const where: Record<string, unknown> = {};
+  if (actorId)    where.actorId    = actorId;
+  if (entityType) where.entityType = entityType;
+  if (entityId)   where.entityId   = entityId;
+  if (action)     where.action     = { contains: action, mode: 'insensitive' };
+  if (fromDate || toDate) {
+    where.createdAt = {
+      ...(fromDate ? { gte: fromDate } : {}),
+      ...(toDate   ? { lte: toDate   } : {}),
+    };
+  }
+
+  const [totalCount, logs] = await Promise.all([
+    prisma.auditLog.count({ where }),
+    prisma.auditLog.findMany({
+      where,
+      select: {
+        id: true, actorId: true, actorRole: true, action: true,
+        entityType: true, entityId: true, reason: true,
+        oldValues: true, newValues: true, requestId: true,
+        createdAt: true,
+        actor: { select: { id: true, name: true, email: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
+    }),
+  ]);
+
+  return {
+    logs,
+    meta: { page, limit, totalCount, totalPages: Math.ceil(totalCount / limit) },
+  };
+};
+
+// ─── Dashboard stats ──────────────────────────────────────────────────────────
+
+export const getDashboardStats = async () => {
+  const now   = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const weekAgo  = new Date(now.getTime() - 7  * 86_400_000);
+  const monthAgo = new Date(now.getTime() - 30 * 86_400_000);
+
+  const [
+    totalShipments,
+    inTransitShipments,
+    deliveredShipments,
+    failedShipments,
+    revenueToday,
+    revenueWeek,
+    revenueMonth,
+    activeCouriers,
+    availableCouriers,
+    busyCouriers,
+    deliveryAttemptStats,
+  ] = await Promise.all([
+    prisma.shipment.count({ where: { deletedAt: null } }),
+    prisma.shipment.count({ where: { deletedAt: null, status: { in: ['IN_TRANSIT', 'AT_ORIGIN_HUB', 'AT_DESTINATION_HUB', 'OUT_FOR_DELIVERY', 'ASSIGNED', 'PICKED_UP'] as any } } }),
+    prisma.shipment.count({ where: { deletedAt: null, status: 'DELIVERED' as any } }),
+    prisma.shipment.count({ where: { deletedAt: null, status: { in: ['DELIVERY_FAILED', 'CANCELLED', 'RETURN_REQUESTED', 'RETURNED'] as any } } }),
+    prisma.payment.aggregate({ where: { status: 'PAID' as any, paidAt: { gte: today } }, _sum: { amount: true } }),
+    prisma.payment.aggregate({ where: { status: 'PAID' as any, paidAt: { gte: weekAgo } }, _sum: { amount: true } }),
+    prisma.payment.aggregate({ where: { status: 'PAID' as any, paidAt: { gte: monthAgo } }, _sum: { amount: true } }),
+    prisma.courierProfile.count({ where: { deletedAt: null, approvalStatus: 'APPROVED' as any } }),
+    prisma.courierProfile.count({ where: { deletedAt: null, approvalStatus: 'APPROVED' as any, available: true } }),
+    prisma.courierProfile.count({ where: { deletedAt: null, approvalStatus: 'APPROVED' as any, available: false } }),
+    prisma.deliveryAttempt.groupBy({ by: ['status'], _count: { id: true } }),
+  ]);
+
+  const deliveredCount = deliveryAttemptStats.find((s) => s.status === 'DELIVERED')?._count.id ?? 0;
+  const failedCount    = deliveryAttemptStats.find((s) => s.status === 'FAILED')?._count.id   ?? 0;
+  const totalAttempts  = deliveredCount + failedCount;
+  const successRate    = totalAttempts > 0 ? Math.round((deliveredCount / totalAttempts) * 1000) / 10 : 0;
+
+  return {
+    shipments: {
+      total:     totalShipments,
+      inTransit: inTransitShipments,
+      delivered: deliveredShipments,
+      failed:    failedShipments,
+    },
+    revenue: {
+      today:     revenueToday._sum.amount  ?? 0,
+      thisWeek:  revenueWeek._sum.amount   ?? 0,
+      thisMonth: revenueMonth._sum.amount  ?? 0,
+    },
+    couriers: {
+      active:    activeCouriers,
+      available: availableCouriers,
+      busy:      busyCouriers,
+    },
+    delivery: {
+      successRate,
+      totalAttempts,
+    },
+  };
+};

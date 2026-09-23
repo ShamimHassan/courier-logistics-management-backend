@@ -11,6 +11,7 @@ import shipmentsRoutes   from '../modules/shipments/shipments.routes';
 import adminRoutes       from '../modules/admin/admin.routes';
 import assignmentsRoutes from '../modules/assignments/assignments.routes';
 import notificationsRoutes from '../modules/notifications/notifications.routes';
+import hubsRoutes        from '../modules/hubs/hubs.routes';
 
 const router = Router();
 
@@ -60,6 +61,19 @@ router.get('/', (_req: Request, res: Response) => {
         admin: {
           assign: 'POST /api/v1/admin/shipments/:id/assign',
           unassigned: 'GET /api/v1/admin/assignments/unassigned',
+          createPricingRule: 'POST /api/v1/admin/pricing-rules',
+          updatePricingRule: 'PATCH /api/v1/admin/pricing-rules/:id',
+          users: 'GET /api/v1/admin/users',
+          updateUserStatus: 'PATCH /api/v1/admin/users/:id/status',
+          updateUserRole: 'PATCH /api/v1/admin/users/:id/role',
+          auditLogs: 'GET /api/v1/admin/audit-logs',
+          dashboardStats: 'GET /api/v1/admin/dashboard-stats',
+        },
+        hubs: {
+          list: 'GET /api/v1/hubs',
+          detail: 'GET /api/v1/hubs/:id',
+          create: 'POST /api/v1/hubs',
+          update: 'PATCH /api/v1/hubs/:id',
         },
         assignments: {
           accept: 'PATCH /api/v1/assignments/:id/accept',
@@ -88,6 +102,7 @@ router.use('/shipments',     shipmentsRoutes);
 router.use('/admin',         adminRoutes);
 router.use('/assignments',   assignmentsRoutes);
 router.use('/notifications', notificationsRoutes);
+router.use('/hubs',          hubsRoutes);
 
 // ─── Admin-only stub for RBAC test (Step 10 backward compat) ─────────────────
 router.get('/admin/test', authenticate, authorize('ADMIN'), (_req: Request, res: Response) => {
