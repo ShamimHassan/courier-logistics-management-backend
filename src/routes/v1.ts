@@ -4,14 +4,15 @@ import { successResponse } from '../common/response';
 import { env } from '../config/env';
 import { authenticate } from '../common/middleware/authenticate';
 import { authorize } from '../common/middleware/authorize';
-import authRoutes        from '../modules/auth/auth.routes';
-import usersRoutes       from '../modules/users/users.routes';
-import couriersRoutes    from '../modules/couriers/couriers.routes';
-import shipmentsRoutes   from '../modules/shipments/shipments.routes';
-import adminRoutes       from '../modules/admin/admin.routes';
-import assignmentsRoutes from '../modules/assignments/assignments.routes';
+import authRoutes          from '../modules/auth/auth.routes';
+import usersRoutes         from '../modules/users/users.routes';
+import couriersRoutes      from '../modules/couriers/couriers.routes';
+import shipmentsRoutes     from '../modules/shipments/shipments.routes';
+import adminRoutes         from '../modules/admin/admin.routes';
+import assignmentsRoutes   from '../modules/assignments/assignments.routes';
 import notificationsRoutes from '../modules/notifications/notifications.routes';
-import hubsRoutes        from '../modules/hubs/hubs.routes';
+import hubsRoutes          from '../modules/hubs/hubs.routes';
+import paymentsRoutes      from '../modules/payments/payments.routes';
 
 const router = Router();
 
@@ -53,6 +54,15 @@ router.get('/', (_req: Request, res: Response) => {
           rating: 'POST /api/v1/shipments/:id/rating',
           update: 'PATCH /api/v1/shipments/:id',
           cancel: 'POST /api/v1/shipments/:id/cancel',
+        },
+        payments: {
+          checkout: 'POST /api/v1/payments/shipments/:id/checkout',
+          ipn: 'POST /api/v1/payments/sslcommerz/ipn',
+          success: 'POST /api/v1/payments/sslcommerz/success',
+          fail: 'POST /api/v1/payments/sslcommerz/fail',
+          cancel: 'POST /api/v1/payments/sslcommerz/cancel',
+          detail: 'GET /api/v1/payments/:id',
+          byShipment: 'GET /api/v1/payments/shipments/:shipmentId',
         },
         notifications: {
           list: 'GET /api/v1/notifications',
@@ -99,6 +109,7 @@ router.use('/auth',          authRoutes);
 router.use('/users',         usersRoutes);
 router.use('/couriers',      couriersRoutes);
 router.use('/shipments',     shipmentsRoutes);
+router.use('/payments',      paymentsRoutes);
 router.use('/admin',         adminRoutes);
 router.use('/assignments',   assignmentsRoutes);
 router.use('/notifications', notificationsRoutes);

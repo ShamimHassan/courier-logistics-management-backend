@@ -52,6 +52,26 @@ const envSchema = z.object({
     .transform((v) => (v && v.trim().length > 0 ? v.trim() : undefined)),
   GOOGLE_CALLBACK_URL: optionalNonEmptyUrl('GOOGLE_CALLBACK_URL'),
 
+  // ─── SSLCommerz ─────────────────────────────────────────────────────────────
+  SSLCOMMERZ_STORE_ID: z
+    .string()
+    .optional()
+    .transform((v) => (v && v.trim().length > 0 ? v.trim() : undefined)),
+  SSLCOMMERZ_STORE_PASSWORD: z
+    .string()
+    .optional()
+    .transform((v) => (v && v.trim().length > 0 ? v.trim() : undefined)),
+  SSLCOMMERZ_IS_SANDBOX: z
+    .string()
+    .default('true')
+    .transform((v) => v !== 'false'),
+  // Alias — some setups use SSLCOMMERZ_SANDBOX instead
+  SSLCOMMERZ_SANDBOX: z
+    .string()
+    .optional()
+    .transform((v) => (v && v.trim().length > 0 ? v.trim() : undefined)),
+
+  // ─── Stripe (kept for legacy seed data compatibility) ─────────────────────
   STRIPE_SECRET_KEY: z
     .string()
     .optional()
