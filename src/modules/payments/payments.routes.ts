@@ -3,6 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import { successResponse } from '../../common/response';
 import { authenticate } from '../../common/middleware/authenticate';
 import { authorize } from '../../common/middleware/authorize';
+import { checkoutLimiter } from '../../common/middleware/rateLimiter';
 import {
   getPaymentById,
   getPaymentByShipment,
@@ -11,6 +12,8 @@ import {
   handleIPN,
   handleSuccess,
   initiateCheckout,
+  refundPayment,
+  refundSchema,
 } from './payments.service';
 import type { SSLCommerzIPNPayload } from '../../config/sslcommerz';
 
@@ -23,6 +26,7 @@ router.post(
   '/shipments/:shipmentId/checkout',
   authenticate,
   authorize('CUSTOMER'),
+  checkoutLimiter,
   async (req: Request, res: Response) => {
     const result = await initiateCheckout(
       String(req.params.shipmentId),
@@ -93,6 +97,26 @@ router.get(
       req.user!.role,
     );
     res.status(StatusCodes.OK).json(successResponse('Payment retrieved successfully', { payment }));
+  },
+);
+
+// ─── POST /payments/:id/refund — Step 27 ─────────────────────────────────────
+
+router.post(
+  '/:id/refund',
+  authenticate,
+  authorize('ADMIN'),
+  async (req: Request, res: Response) => {
+    const input = refundSchema.parse(req.body);
+    const result = await refundPayment(
+      String(req.params.id),
+      input,
+      req.user!.id,
+      req.id,
+    );
+    res.status(StatusCodes.OK).json(
+      successResponse('Payment refunded successfully', result),
+    );
   },
 );
 

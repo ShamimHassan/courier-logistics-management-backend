@@ -6,6 +6,7 @@ import { getCorsOrigins } from './config/env';
 import { requestIdMiddleware } from './common/middleware/requestId';
 import { notFoundHandler } from './common/middleware/notFound';
 import { errorHandler } from './common/middleware/errorHandler';
+import { globalLimiter } from './common/middleware/rateLimiter';
 import v1Routes from './routes/v1';
 
 const app = express();
@@ -35,6 +36,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use(requestIdMiddleware);
+
+// Global rate limiting (100 req/min per IP, skips SSLCommerz callbacks)
+app.use(globalLimiter);
 
 app.use('/api/v1', v1Routes);
 

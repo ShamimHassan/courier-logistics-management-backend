@@ -553,3 +553,124 @@ export const reconcilePendingPayments = async () => {
 
   return { checked: stalePending.length, confirmed, expired };
 };
+
+// ─── POST /payments/:id/refund ────────────────────────────────────────────────
+
+import { z } from 'zod';
+
+export const refundSchema = z.object({
+  reason: z.string().trim().min(3, 'Reason is required').max(500),
+  amount: z.number().int().positive().optional(), // defaults to full amount
+});
+export type RefundInput = z.infer<typeof refundSchema>;
+
+export const refundPayment = async (
+  paymentId: string,
+  input: RefundInput,
+  adminId: string,
+  requestId?: string,
+) => {
+  const payment = await prisma.payment.findUnique({
+    where: { id: paymentId, deletedAt: null },
+    select: {
+      id: true,
+      status: true,
+      amount: true,
+      refundedAmount: true,
+      customerId: true,
+      shipmentId: true,
+      shipment: { select: { id: true, status: true, trackingNumber: true } },
+    },
+  });
+
+  if (!payment) throw NotFoundError('Payment not found');
+
+  if (payment.status !== PaymentStatus.PAID) {
+    throw new AppError(
+      `Cannot refund a payment in status "${payment.status}"`,
+      409,
+      [{ code: 'NOT_REFUNDABLE', message: 'Only PAID payments can be refunded' }],
+    );
+  }
+
+  const refundAmount = input.amount ?? payment.amount;
+
+  if (refundAmount > payment.amount) {
+    throw BadRequestError('Refund amount exceeds original payment amount', [
+      { field: 'amount', code: 'EXCEEDS_PAYMENT', message: `Maximum refundable: ${payment.amount} BDT` },
+    ]);
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.payment.update({
+      where: { id: paymentId },
+      data: {
+        status: PaymentStatus.REFUNDED,
+        refundedAmount: refundAmount,
+        providerRefundId: `MANUAL_REFUND_${Date.now()}`, // SSLCommerz refunds are manual
+      },
+    });
+
+    // Shipment status update per refund policy (reuse Step 17 cancel rules)
+    if (payment.shipment) {
+      const currentStatus = payment.shipment.status as ShipmentStatus;
+      const preCancelStatuses: ShipmentStatus[] = [
+        ShipmentStatus.DRAFT,
+        ShipmentStatus.PAYMENT_PENDING,
+        ShipmentStatus.PAYMENT_FAILED,
+        ShipmentStatus.CONFIRMED,
+        ShipmentStatus.ASSIGNMENT_PENDING,
+        ShipmentStatus.ASSIGNED,
+      ];
+      // Only update shipment status if it's still in a pre-delivery state
+      if (preCancelStatuses.includes(currentStatus)) {
+        await tx.shipment.update({
+          where: { id: payment.shipment.id },
+          data: { status: ShipmentStatus.CANCELLED, deletedAt: new Date() },
+        });
+        await tx.trackingEvent.create({
+          data: {
+            shipmentId: payment.shipment.id,
+            eventType:  ShipmentStatus.CANCELLED,
+            notes:      `Admin refund issued. Reason: ${input.reason}`,
+            actorId:    adminId,
+            actorRole:  Role.ADMIN,
+          },
+        });
+      }
+    }
+
+    // Notify customer
+    await tx.notification.create({
+      data: {
+        recipientId: payment.customerId,
+        type:        'PAYMENT_REFUNDED',
+        title:       'Payment refunded',
+        message:     `A refund of ${refundAmount} BDT has been processed for shipment ${payment.shipment?.trackingNumber ?? paymentId}. Reason: ${input.reason}`,
+        shipmentId:  payment.shipmentId ?? undefined,
+      },
+    });
+
+    // AuditLog
+    await tx.auditLog.create({
+      data: {
+        actorId:    adminId,
+        actorRole:  Role.ADMIN,
+        action:     'PAYMENT_REFUNDED',
+        entityType: 'Payment',
+        entityId:   paymentId,
+        requestId:  requestId ?? null,
+        reason:     input.reason,
+        oldValues:  { status: PaymentStatus.PAID, amount: payment.amount } as any, // eslint-disable-line
+        newValues:  { status: PaymentStatus.REFUNDED, refundedAmount: refundAmount } as any, // eslint-disable-line
+      },
+    });
+  });
+
+  return {
+    paymentId,
+    status: PaymentStatus.REFUNDED,
+    refundedAmount: refundAmount,
+    reason: input.reason,
+  };
+};

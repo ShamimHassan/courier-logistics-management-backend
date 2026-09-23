@@ -10,12 +10,13 @@ import {
 } from './auth.validation';
 import { assertGoogleConfigured, buildGoogleAuthUrl, exchangeCodeForProfile } from './auth.google';
 import { authenticateOptional } from '../../common/middleware/authenticate';
+import { authLimiter } from '../../common/middleware/rateLimiter';
 
 const router = Router();
 
 // ─── Register ─────────────────────────────────────────────────────────────────
 
-router.post('/register', async (req: Request, res: Response) => {
+router.post('/register', authLimiter, async (req: Request, res: Response) => {
   const payload = registerSchema.parse(req.body);
   const { user, accessToken, refreshToken, expiresIn } = await registerCustomer(
     payload,
@@ -35,7 +36,7 @@ router.post('/register', async (req: Request, res: Response) => {
 
 // ─── Login ────────────────────────────────────────────────────────────────────
 
-router.post('/login', async (req: Request, res: Response) => {
+router.post('/login', authLimiter, async (req: Request, res: Response) => {
   const payload = loginSchema.parse(req.body);
   const { user, accessToken, refreshToken, expiresIn } = await loginUser(
     payload,
